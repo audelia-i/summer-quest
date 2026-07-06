@@ -66,7 +66,21 @@
   .header-avatar{font-size:34px; width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;}
   .header-name{font-weight:800; font-size:19px;}
   .header-sub{font-size:12px; opacity:.75;}
-  .change-avatar-btn{margin-inline-start:auto; background:rgba(255,255,255,.12); border-radius:14px; padding:8px 12px; font-size:12px; color:#fff;}
+  .change-avatar-btn{background:rgba(255,255,255,.12); border-radius:14px; padding:8px 12px; font-size:12px; color:#fff;}
+  .mailbox-btn{
+    position:relative; margin-inline-start:auto; background:rgba(255,255,255,.12); border-radius:50%;
+    width:38px; height:38px; font-size:18px; display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .mailbox-badge{
+    position:absolute; top:-4px; left:-4px; background:var(--danger); color:#fff; font-size:10px; font-weight:800;
+    border-radius:50%; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;
+  }
+  .message-list{display:flex; flex-direction:column; gap:10px; margin:14px 0; max-height:50vh; overflow-y:auto;}
+  .message-item{background:rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; text-align:right;}
+  .message-item.unread{background:rgba(139,92,246,.25); border:1px solid rgba(139,92,246,.5);}
+  .message-text{font-size:14px; line-height:1.4;}
+  .message-date{font-size:11px; opacity:.6; margin-top:6px;}
+  .msg-textarea{width:100%; min-height:70px; letter-spacing:normal; font-size:14px; text-align:right; resize:vertical; margin:10px 0;}
 
   .xp-bar-wrap{background:rgba(0,0,0,.25); border-radius:10px; height:14px; overflow:hidden; margin:4px 0 2px;}
   .xp-bar-fill{height:100%; background:linear-gradient(90deg,var(--gold),#f59e0b); transition:width .5s ease;}
@@ -188,6 +202,11 @@
   .admin-wrap{min-height:100vh; padding:18px 14px 60px; background:#161029;}
   .admin-card{background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px; padding:16px; margin-bottom:14px;}
   .admin-card h3{margin:0 0 10px; font-size:16px;}
+  .snapshot-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .snapshot-card{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.06); border-radius:12px; padding:10px;}
+  .snapshot-avatar{font-size:28px; width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .snapshot-name{font-weight:700; font-size:13px; margin-bottom:2px;}
+  .snapshot-stats{display:flex; flex-wrap:wrap; gap:6px; font-size:11px; opacity:.85;}
   .field-row{display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:13px;}
   .field-row label{width:90px; opacity:.8; flex-shrink:0;}
   select, input[type=time]{background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:7px 8px; font-size:13px; font-family:inherit;}
@@ -279,7 +298,8 @@ const DINNER_STEPS = [
   {icon:'📣', label:'הזמנת המשפחה לשולחן'},
 ];
 
-const XP_PER_LEVEL = 100;
+const XP_PER_LEVEL = 100; // כל 100 מטבעות = יהלום אחד
+const DIAMONDS_PER_LEVEL = 10; // כל 10 יהלומים = רמה אחת
 const READING_SECONDS = 15*60;
 const BOARDGAME_SECONDS = 60*60;
 
@@ -288,6 +308,7 @@ const BOARDGAME_SECONDS = 60*60;
 const SUPABASE_URL = 'https://jrntbdgepcskjjzcqwcp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpybnRiZGdlcGNza2pqemNxd2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMjk2NzgsImV4cCI6MjA5ODkwNTY3OH0.MyTRXEvuc1CZqhgR55Dap5wUfBEI6Jmv6p8v7fsNMg8';
 const APP_PASSCODE = '0987'; // קוד סודי משפחתי - שנו את זה לקוד משלכם
+const ADMIN_PASSCODE = '2468'; // קוד נפרד למצב הורים - שנו לקוד שרק את/ה יודעת
 
 const supabase = (SUPABASE_URL.startsWith('http'))
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -297,14 +318,16 @@ const supabase = (SUPABASE_URL.startsWith('http'))
 
 async function loadStateFromSupabase(){
   const s = defaultState();
-  const [childRes, schedRes, dailyRes] = await Promise.all([
+  const [childRes, schedRes, dailyRes, msgRes] = await Promise.all([
     supabase.from('children').select('*'),
     supabase.from('schedule').select('*'),
     supabase.from('daily_progress').select('*'),
+    supabase.from('messages').select('*').order('created_at', {ascending:false}),
   ]);
   if(childRes.error) throw childRes.error;
   if(schedRes.error) throw schedRes.error;
   if(dailyRes.error) throw dailyRes.error;
+  if(msgRes.error) throw msgRes.error;
 
   (childRes.data||[]).forEach(row=>{
     const c = s.children[row.id];
@@ -329,7 +352,13 @@ async function loadStateFromSupabase(){
     c.daily[row.date] = {
       done: row.done||{}, timers: row.timers||{}, dinnerSteps: row.dinner_steps||{},
       surpriseShown: !!row.surprise_shown, achieved: !!row.achieved, bonusStarAwarded: !!row.bonus_star_awarded,
+      bonusGamesPlayed: row.bonus_games_played||0,
     };
+  });
+  (msgRes.data||[]).forEach(row=>{
+    const c = s.children[row.child_id];
+    if(!c) return;
+    c.messages.push({ id: row.id, text: row.text, createdAt: row.created_at, read: !!row.read });
   });
   return s;
 }
@@ -352,11 +381,34 @@ async function persistChildToSupabase(childId){
       child_id: childId, date: dateStr, done: daily.done, timers: daily.timers,
       dinner_steps: daily.dinnerSteps, surprise_shown: daily.surpriseShown,
       achieved: daily.achieved, bonus_star_awarded: !!daily.bonusStarAwarded,
+      bonus_games_played: daily.bonusGamesPlayed||0,
     }),
   ]);
   if(childRes.error) console.error('sync error (children):', childRes.error);
   if(schedRes.error) console.error('sync error (schedule):', schedRes.error);
   if(dailyRes.error) console.error('sync error (daily_progress):', dailyRes.error);
+}
+
+async function sendMomMessage(childIds, text){
+  const trimmed = text.trim();
+  if(!trimmed || !childIds.length) return;
+  const rows = childIds.map(id=>({ child_id:id, text:trimmed }));
+  const { data, error } = await supabase.from('messages').insert(rows).select();
+  if(error){ console.error('sync error (messages insert):', error); return; }
+  (data||[]).forEach(row=>{
+    const c = STATE.children[row.child_id];
+    if(c) c.messages.unshift({ id: row.id, text: row.text, createdAt: row.created_at, read: !!row.read });
+  });
+}
+
+async function markMessagesRead(childId){
+  const c = STATE.children[childId];
+  const unread = c.messages.filter(m=>!m.read);
+  if(!unread.length) return;
+  unread.forEach(m=>{ m.read = true; });
+  const ids = unread.map(m=>m.id);
+  const { error } = await supabase.from('messages').update({read:true}).in('id', ids);
+  if(error) console.error('sync error (messages read):', error);
 }
 
 /* ===================== STATE ===================== */
@@ -368,6 +420,7 @@ function freshChildState(id){
     xp:0, level:1, streak:0, stars:0,
     lastActiveDate:null, lastCompleteDate:null,
     daily:{}, // dateStr -> {done:{taskId:true}, timers:{taskId:{startedAt,duration}}, dinnerSteps:{idx:true}, surpriseShown:false, achieved:false}
+    messages:[], // {id, text, createdAt, read}
   };
 }
 
@@ -469,8 +522,8 @@ function getQuestTasks(childId, dateStr){
   const sched = STATE.schedule[childId];
   const dow = new Date(dateStr+'T12:00:00').getDay();
   const tasks = [
-    {id:'reading', icon:'📖', label:'קריאה 15 דק\'', xp:10, type:'timer', duration:READING_SECONDS},
-    {id:'boardgame', icon:'🎲', label:'משחק קופסא שעה', xp:10, type:'timer', duration:BOARDGAME_SECONDS},
+    {id:'reading', icon:'📖', label:'קריאה 15 דק\'', xp:30, type:'timer', duration:READING_SECONDS},
+    {id:'boardgame', icon:'🎲', label:'משחק קופסא שעה', xp:25, type:'timer', duration:BOARDGAME_SECONDS},
     {id:'bed', icon:'🛏️', label:'סידור מיטה', xp:10, type:'check'},
   ];
   if(sched.lessonDay===dow){
@@ -480,8 +533,8 @@ function getQuestTasks(childId, dateStr){
     tasks.push({id:'sport', icon:'⚽', label:'בלייזספורט', xp:15, type:'check'});
   }
   if(sched.dinnerDay===dow){
-    tasks.push({id:'dinner1', icon:'🍽️', label:'עריכת שולחן', xp:12, type:'check'});
-    tasks.push({id:'dinner2', icon:'🧹', label:'פינוי שולחן', xp:12, type:'check'});
+    tasks.push({id:'dinner1', icon:'🍽️', label:'עריכת שולחן', xp:8, type:'check'});
+    tasks.push({id:'dinner2', icon:'🧹', label:'פינוי שולחן', xp:7, type:'check'});
   }
   return tasks;
 }
@@ -513,12 +566,19 @@ function completedCount(childId, dateStr){
   return tasks.filter(t=>isTaskDone(childId,dateStr,t.id)).length;
 }
 
+function awardDiamonds(childId, amount){
+  const c = STATE.children[childId];
+  c.stars += amount;
+  c.level = Math.floor(c.stars/DIAMONDS_PER_LEVEL)+1;
+}
+
 function addXP(childId, amount){
   const c = STATE.children[childId];
-  const track = CHILDREN_CONFIG[childId].track;
+  const oldMilestone = Math.floor(c.xp/XP_PER_LEVEL);
   c.xp += amount;
-  if(track==='quest'){
-    c.level = Math.floor(c.xp/XP_PER_LEVEL)+1;
+  const newMilestone = Math.floor(c.xp/XP_PER_LEVEL);
+  if(newMilestone > oldMilestone){
+    awardDiamonds(childId, newMilestone-oldMilestone);
   }
 }
 
@@ -538,11 +598,10 @@ function checkForAchievement(childId, dateStr){
   const allDone = tasks.length>0 && tasks.every(t=>daily.done[t.id]);
   if(allDone && !daily.achieved){
     daily.achieved = true;
-    const c = STATE.children[childId];
     const track = CHILDREN_CONFIG[childId].track;
-    c.stars += 1;
+    awardDiamonds(childId, 1);
     if(track==='quest'){
-      c.streak += 1;
+      STATE.children[childId].streak += 1;
     }
     persist();
     showAchievementModal(childId);
@@ -550,7 +609,6 @@ function checkForAchievement(childId, dateStr){
   // dinner duty double-step surprise (quest only)
   if(CHILDREN_CONFIG[childId].track==='quest' && daily.done['dinner1'] && daily.done['dinner2'] && !daily.surpriseShown){
     daily.surpriseShown = true;
-    addXP(childId, 15);
     persist();
     setTimeout(()=>showSurpriseModal(childId), allDone?900:150);
   }
@@ -567,6 +625,7 @@ function render(){
   else if(VIEW.screen==='avatarPicker') app.innerHTML = renderAvatarPicker(VIEW.childId);
   else if(VIEW.screen==='home') app.innerHTML = renderHome(VIEW.childId);
   else if(VIEW.screen==='admin') app.innerHTML = renderAdmin();
+  else if(VIEW.screen==='adminLock') app.innerHTML = renderAdminLock();
   renderModal();
 }
 
@@ -616,7 +675,7 @@ function renderAvatarPicker(childId){
   return `<div class="${cfg.track==='quest'?'quest-theme':'island-theme'} home-wrap screen">
     <div class="home-header">
       <button class="back-btn" data-action="backToProfiles">→</button>
-      <div class="header-name">בחר/י דמות, ${cfg.name}</div>
+      <div class="header-name">בחר דמות, ${cfg.name}</div>
     </div>
     <div class="avatar-grid">${opts}</div>
     ${c.avatar ? `<button class="modal-btn" data-action="confirmAvatar" data-child="${childId}">המשך</button>` : ''}
@@ -734,17 +793,27 @@ function renderPathTrack(childId, dateStr, tasks){
 }
 
 const QUEST_BONUSES = [
-  {id:'wake', icon:'☀️', label:'אמרתי בוקר טוב לאמא או אבא', xp:5},
-  {id:'screentime', icon:'📵', label:'עשיתי הפסקה של שעה מהמסך', xp:5},
+  {id:'wake', icon:'☀️', label:'אמרתי בוקר טוב לאמא או אבא', xp:10},
+  {id:'screentime', icon:'📵', label:'עשיתי הפסקה של שעה מהמסך', xp:20},
 ];
+
+const ISLAND_BONUSES = [
+  {id:'screentime', icon:'📵', label:'עשיתי הפסקה של שעה מהמסך', xp:20},
+];
+
+function renderMailboxBtn(childId){
+  const c = STATE.children[childId];
+  const unread = c.messages.filter(m=>!m.read).length;
+  return `<button class="mailbox-btn" data-action="openMessagesInbox" data-child="${childId}">💌${unread>0?`<span class="mailbox-badge">${unread}</span>`:''}</button>`;
+}
 
 function renderStarsSummary(childId){
   const c = STATE.children[childId];
   return `<div class="stars-summary">
-    <span class="stars-summary-icon">⭐</span>
+    <span class="stars-summary-icon">💎</span>
     <div>
       <div class="stars-summary-num">${c.stars}</div>
-      <div class="stars-summary-label">כוכבים נאספו</div>
+      <div class="stars-summary-label">יהלומים נאספו</div>
     </div>
   </div>`;
 }
@@ -762,7 +831,7 @@ function renderQuestHome(childId){
     return `<button class="bonus-chip ${done?'done':''}" data-action="toggleBonus" data-child="${childId}" data-bonus="${b.id}" data-xp="${b.xp}" ${done?'disabled':''}>
       <span class="bonus-emoji">${b.icon}</span>
       <span>${b.label}</span>
-      ${done ? '<span>✓ +'+b.xp+' XP</span>' : '<span>+'+b.xp+' XP</span>'}
+      ${done ? '<span>✓ +'+b.xp+' 🪙</span>' : '<span>+'+b.xp+' 🪙</span>'}
     </button>`;
   }).join('');
 
@@ -774,10 +843,11 @@ function renderQuestHome(childId){
         <div class="header-name">${cfg.name}</div>
         <div class="header-sub">רמה ${c.level}</div>
       </div>
+      ${renderMailboxBtn(childId)}
       <button class="change-avatar-btn" data-action="changeAvatar" data-child="${childId}">החלף דמות</button>
     </div>
     <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${xpIntoLevel}%"></div></div>
-    <div class="xp-label"><span>${xpIntoLevel} / ${XP_PER_LEVEL} XP</span><span>סה"כ ${c.xp} XP</span></div>
+    <div class="xp-label"><span>${xpIntoLevel} / ${XP_PER_LEVEL} 🪙</span><span>סה"כ ${c.xp} 🪙</span></div>
     <div class="streak-chip">🔥 רצף ${c.streak} ימים</div>
     <div class="bonus-row">${bonusChips}</div>
     ${renderPathTrack(childId, dateStr, tasks)}
@@ -791,15 +861,34 @@ function renderIslandHome(childId){
   const av = findAvatar('island', c.avatar);
   const dateStr = todayKey();
   const tasks = getIslandTasks(childId, dateStr);
+  const daily = ensureDaily(childId, dateStr);
+  const playedCount = daily.bonusGamesPlayed||0;
+  const bonusChips = ISLAND_BONUSES.map(b=>{
+    const done = !!daily.done[b.id];
+    return `<button class="bonus-chip ${done?'done':''}" data-action="toggleBonus" data-child="${childId}" data-bonus="${b.id}" data-xp="${b.xp}" ${done?'disabled':''}>
+      <span class="bonus-emoji">${b.icon}</span>
+      <span>${b.label}</span>
+      ${done ? '<span>✓ +'+b.xp+' 🪙</span>' : '<span>+'+b.xp+' 🪙</span>'}
+    </button>`;
+  }).join('');
   return `<div class="island-theme home-wrap screen">
     <div class="home-header">
       <button class="back-btn" data-action="backToProfiles">→</button>
       <div class="header-avatar">${av?av.emoji:'🙂'}</div>
       <div>
         <div class="header-name">${cfg.name}</div>
-        <div class="header-sub">⭐ ${c.stars} כוכבים</div>
+        <div class="header-sub">💎 ${c.stars} יהלומים</div>
       </div>
+      ${renderMailboxBtn(childId)}
       <button class="change-avatar-btn" data-action="changeAvatar" data-child="${childId}">החלף דמות</button>
+    </div>
+    <div class="bonus-row">
+      ${bonusChips}
+      <button class="bonus-chip" data-action="openBonusGame" data-child="${childId}">
+        <span class="bonus-emoji">🎮</span>
+        <span>עוד סיבוב! (בונוס)</span>
+        <span>+30 🪙${playedCount ? ` · שיחקת ${playedCount} פעמים היום` : ''}</span>
+      </button>
     </div>
     ${renderPathTrack(childId, dateStr, tasks)}
     ${renderStarsSummary(childId)}
@@ -809,20 +898,8 @@ function renderIslandHome(childId){
 function backToProfiles(){ setScreen('profiles'); }
 function changeAvatar(childId){ setScreen('avatarPicker', childId); }
 
-function checkBonusStarAward(childId){
-  const dateStr = todayKey();
-  const daily = ensureDaily(childId, dateStr);
-  const allBonusesDone = QUEST_BONUSES.every(b=>daily.done[b.id]);
-  if(allBonusesDone && !daily.bonusStarAwarded){
-    daily.bonusStarAwarded = true;
-    STATE.children[childId].stars += 1;
-    persist();
-  }
-}
-
 function toggleBonus(childId, bonusId, xp){
   markTaskDone(childId, bonusId, xp);
-  checkBonusStarAward(childId);
   render();
 }
 
@@ -874,13 +951,42 @@ const MODAL_RENDERERS = {
     <div style="font-size:54px;">🎁</div>
     <div class="modal-title">הפתעה!</div>
     <div class="modal-sub" style="font-size:16px;">${data.surprise}</div>
-    <div class="modal-sub">+15 XP בונוס</div>
     <button class="modal-btn" data-action="closeModal">יש!</button>
   </div></div>`,
   timer: (data)=>renderTimerModal(data),
   trivia: (data)=>renderTriviaModal(data),
   dinnersteps: (data)=>renderDinnerStepsModal(data),
+  messages: (data)=>renderMessagesModal(data),
 };
+
+function formatMsgDate(iso){
+  const d = new Date(iso);
+  const now = new Date();
+  const time = d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  if(d.toDateString()===now.toDateString()) return 'היום '+time;
+  return d.toLocaleDateString('he-IL', {day:'2-digit', month:'2-digit'}) + ' ' + time;
+}
+
+function renderMessagesModal(data){
+  const c = STATE.children[data.childId];
+  const list = c.messages.length ? c.messages.map(m=>`
+    <div class="message-item ${m.read?'':'unread'}">
+      <div class="message-text">${escapeHtml(m.text)}</div>
+      <div class="message-date">${formatMsgDate(m.createdAt)}</div>
+    </div>`).join('') : `<div class="modal-sub">אין הודעות עדיין 💌</div>`;
+  return `<div class="modal-overlay"><div class="modal-card">
+    <div class="modal-title">💌 הודעות מאמא</div>
+    <div class="message-list">${list}</div>
+    <button class="modal-btn" data-action="closeModal">סגור</button>
+  </div></div>`;
+}
+
+function openMessagesInbox(childId){
+  VIEW.modal = 'messages';
+  VIEW.modalData = { childId };
+  markMessagesRead(childId);
+  render();
+}
 
 function showAchievementModal(childId){
   const cfg = CHILDREN_CONFIG[childId];
@@ -1049,8 +1155,19 @@ function triviaAnswer(idx){
 }
 
 function finishTrivia(childId, task){
-  markTaskDone(childId, task.id, task.xp);
+  if(task.repeatable){
+    const daily = ensureDaily(childId, todayKey());
+    daily.bonusGamesPlayed = (daily.bonusGamesPlayed||0) + 1;
+    addXP(childId, task.xp);
+    persist(childId);
+  }else{
+    markTaskDone(childId, task.id, task.xp);
+  }
   if(VIEW.modal==='trivia'){ VIEW.modal=null; VIEW.modalData=null; render(); }
+}
+
+function openBonusGame(childId){
+  openTriviaModal(childId, { id:'trivia_bonus', icon:'🎮', label:'עוד סיבוב! (בונוס)', xp:30, repeatable:true });
 }
 
 /* ---- Dinner steps modal (island) ---- */
@@ -1098,6 +1215,108 @@ function finishDinnerSteps(){
 
 /* ===================== ADMIN ===================== */
 
+const ADMIN_UNLOCK_KEY = 'sqAdminUnlocked_v1';
+
+function isAdminUnlocked(){
+  try{ return localStorage.getItem(ADMIN_UNLOCK_KEY)==='1'; }catch(e){ return false; }
+}
+
+function openAdmin(){
+  if(isAdminUnlocked()) setScreen('admin');
+  else setScreen('adminLock');
+}
+
+function renderAdminLock(){
+  return `<div class="lock-wrap screen">
+    <div class="lock-card">
+      <div class="app-title">🔒 מצב הורים</div>
+      <div class="app-subtitle">הזינו את הקוד של ההורים</div>
+      <input id="adminLockInput" class="lock-input" type="text" inputmode="numeric" maxlength="12" placeholder="קוד הורים" autocomplete="off">
+      <div class="lock-error" id="adminLockError"></div>
+      <button class="modal-btn" data-action="tryAdminUnlock">כניסה</button>
+      <button class="modal-btn secondary" data-action="backToProfiles">ביטול</button>
+    </div>
+  </div>`;
+}
+
+function tryAdminUnlock(){
+  const input = document.getElementById('adminLockInput');
+  const val = input ? input.value.trim() : '';
+  if(val && val===ADMIN_PASSCODE){
+    try{ localStorage.setItem(ADMIN_UNLOCK_KEY,'1'); }catch(e){}
+    setScreen('admin');
+  }else{
+    const err = document.getElementById('adminLockError');
+    if(err) err.textContent = 'קוד שגוי, נסו שוב';
+  }
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function renderProgressSnapshot(){
+  const dateStr = todayKey();
+  const cards = Object.keys(CHILDREN_CONFIG).map(id=>{
+    const cfg = CHILDREN_CONFIG[id];
+    const c = STATE.children[id];
+    const av = c.avatar ? findAvatar(cfg.track, c.avatar) : null;
+    const tasks = getTasksFor(id, dateStr);
+    const done = completedCount(id, dateStr);
+    const total = tasks.length;
+    const levelChip = cfg.track==='quest' ? `<span>רמה ${c.level}</span><span>🔥 ${c.streak}</span>` : '';
+    return `<div class="snapshot-card">
+      <div class="snapshot-avatar">${av?av.emoji:'❔'}</div>
+      <div class="snapshot-info">
+        <div class="snapshot-name">${cfg.name}</div>
+        <div class="snapshot-stats">
+          <span>🪙 ${c.xp}</span><span>💎 ${c.stars}</span>${levelChip}<span>היום: ${done}/${total}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="admin-card">
+    <h3>📊 תמונת מצב</h3>
+    <div class="snapshot-grid">${cards}</div>
+  </div>`;
+}
+
+let MSG_TARGETS = new Set();
+let MSG_TEXT = '';
+
+function renderMessageComposer(){
+  const checks = Object.keys(CHILDREN_CONFIG).map(id=>{
+    const cfg = CHILDREN_CONFIG[id];
+    return `<button class="day-check ${MSG_TARGETS.has(id)?'on':''}" data-action="toggleMsgTarget" data-child="${id}">${cfg.name}</button>`;
+  }).join('');
+  return `<div class="admin-card">
+    <h3>💌 הודעה מאמא</h3>
+    <div class="field-row" style="align-items:flex-start;"><label>לשלוח ל</label>
+      <div class="day-checks">${checks}</div>
+    </div>
+    <textarea id="momMessageText" class="lock-input msg-textarea" placeholder="כתבו הודעה...">${escapeHtml(MSG_TEXT)}</textarea>
+    <button class="modal-btn" data-action="sendMomMessageClick">שלח הודעה</button>
+  </div>`;
+}
+
+function toggleMsgTarget(childId){
+  if(MSG_TARGETS.has(childId)) MSG_TARGETS.delete(childId); else MSG_TARGETS.add(childId);
+  render();
+}
+
+function sendMomMessageClick(){
+  const textarea = document.getElementById('momMessageText');
+  const text = textarea ? textarea.value : '';
+  if(!text.trim() || MSG_TARGETS.size===0) return;
+  const targets = [...MSG_TARGETS];
+  sendMomMessage(targets, text).then(()=>{
+    MSG_TARGETS.clear();
+    MSG_TEXT = '';
+    render();
+    flashSaved();
+  });
+}
+
 function renderAdmin(){
   const cards = Object.keys(CHILDREN_CONFIG).map(id=>{
     const cfg = CHILDREN_CONFIG[id];
@@ -1129,7 +1348,9 @@ function renderAdmin(){
       <button class="back-btn" data-action="backToProfiles">→</button>
       <div class="header-name">מצב הורים</div>
     </div>
+    ${renderProgressSnapshot()}
     ${cards}
+    ${renderMessageComposer()}
     <button class="modal-btn danger" data-action="requestReset">איפוס התקדמות כללי</button>
     <div class="saved-flash" id="savedFlash">נשמר ✓</div>
   </div>`;
@@ -1164,7 +1385,7 @@ function requestReset(){
   VIEW.modal = 'confirmReset';
   MODAL_RENDERERS.confirmReset = ()=>`<div class="modal-overlay"><div class="modal-card">
     <div class="modal-title">איפוס כללי?</div>
-    <div class="modal-sub">כל ה-XP, הרמות, הרצף וההתקדמות היומית יאופסו. הדמויות ולוח הזמנים יישארו.</div>
+    <div class="modal-sub">כל המטבעות, היהלומים, הרמות, הרצף וההתקדמות היומית יאופסו. הדמויות ולוח הזמנים יישארו.</div>
     <button class="modal-btn danger" data-action="doReset">כן, אפס</button>
     <button class="modal-btn secondary" data-action="closeModal">ביטול</button>
   </div></div>`;
@@ -1191,12 +1412,13 @@ document.addEventListener('click', function(e){
   const child = el.dataset.child;
   switch(action){
     case 'openChild': openChild(child); break;
-    case 'openAdmin': setScreen('admin'); break;
+    case 'openAdmin': openAdmin(); break;
     case 'backToProfiles': backToProfiles(); break;
     case 'pickAvatar': pickAvatar(child, el.dataset.avatar); break;
     case 'confirmAvatar': setScreen('home', child); break;
     case 'changeAvatar': changeAvatar(child); break;
     case 'toggleBonus': toggleBonus(child, el.dataset.bonus, parseInt(el.dataset.xp,10)); break;
+    case 'openBonusGame': openBonusGame(child); break;
     case 'openTask': openTask(child, el.dataset.task); break;
     case 'closeModal': closeModal(); break;
     case 'cancelTimer': cancelTimer(child, el.dataset.task); break;
@@ -1210,7 +1432,11 @@ document.addEventListener('click', function(e){
     case 'setSportTime': setSportTime(child, el.value); break;
     case 'toggleSportDay': toggleSportDay(child, el.dataset.day); break;
     case 'setDinnerDay': setDinnerDay(child, el.value); break;
+    case 'toggleMsgTarget': toggleMsgTarget(child); break;
+    case 'sendMomMessageClick': sendMomMessageClick(); break;
+    case 'openMessagesInbox': openMessagesInbox(child); break;
     case 'tryUnlock': tryUnlock(); break;
+    case 'tryAdminUnlock': tryAdminUnlock(); break;
   }
 });
 document.addEventListener('change', function(e){
@@ -1225,6 +1451,10 @@ document.addEventListener('change', function(e){
 });
 document.addEventListener('keydown', function(e){
   if(e.key==='Enter' && e.target && e.target.id==='lockInput') tryUnlock();
+  if(e.key==='Enter' && e.target && e.target.id==='adminLockInput') tryAdminUnlock();
+});
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id==='momMessageText') MSG_TEXT = e.target.value;
 });
 
 /* ===================== LOCK SCREEN + BOOT ===================== */
