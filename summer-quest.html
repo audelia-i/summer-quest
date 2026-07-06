@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>מסע הקיץ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --quest-bg: linear-gradient(160deg,#1e1b4b,#4c1d95 55%,#7c3aed);
+    --quest-accent:#8b5cf6;
+    --quest-accent2:#c084fc;
+    --island-bg: linear-gradient(160deg,#0c4a6e,#0e7490 55%,#22d3ee);
+    --island-accent:#06b6d4;
+    --island-accent2:#5eead4;
+    --gold:#fbbf24;
+    --card-bg: rgba(255,255,255,0.10);
+    --card-border: rgba(255,255,255,0.18);
+    --danger:#ef4444;
+    --good:#22c55e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:#0f0c29;
+    color:#fff;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  #app{min-height:100vh; padding-bottom:40px;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  .screen{animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+
+  /* ---------- profile select ---------- */
+  .profiles-wrap{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 0%, #4c1d95, #0f0c29 70%);
+    padding:24px 16px;
+    position:relative;
+  }
+  .app-title{font-size:28px; font-weight:800; margin-bottom:6px; text-align:center;}
+  .app-subtitle{opacity:.7; font-size:14px; margin-bottom:28px;}
+  .profile-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; width:100%; max-width:420px;}
+  .profile-card{
+    background:var(--card-bg); border:1px solid var(--card-border); border-radius:20px;
+    padding:18px 10px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;
+    transition:transform .15s;
+  }
+  .profile-card:active{transform:scale(.95);}
+  .profile-avatar{font-size:48px; width:78px; height:78px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.08);}
+  .profile-name{font-weight:700; font-size:17px;}
+  .profile-track{font-size:12px; opacity:.65;}
+  .gear-btn{
+    position:absolute; top:16px; left:16px; background:rgba(255,255,255,.08); border-radius:50%;
+    width:42px; height:42px; font-size:20px; display:flex; align-items:center; justify-content:center; opacity:.6;
+  }
+
+  /* ---------- home header ---------- */
+  .home-wrap{min-height:100vh; padding:18px 14px 60px;}
+  .quest-theme{background:var(--quest-bg);}
+  .island-theme{background:var(--island-bg);}
+  .home-header{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .back-btn{background:rgba(255,255,255,.12); border-radius:50%; width:38px; height:38px; font-size:16px; color:#fff;}
+  .header-avatar{font-size:34px; width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;}
+  .header-name{font-weight:800; font-size:19px;}
+  .header-sub{font-size:12px; opacity:.75;}
+  .change-avatar-btn{margin-inline-start:auto; background:rgba(255,255,255,.12); border-radius:14px; padding:8px 12px; font-size:12px; color:#fff;}
+
+  .xp-bar-wrap{background:rgba(0,0,0,.25); border-radius:10px; height:14px; overflow:hidden; margin:4px 0 2px;}
+  .xp-bar-fill{height:100%; background:linear-gradient(90deg,var(--gold),#f59e0b); transition:width .5s ease;}
+  .xp-label{font-size:11px; opacity:.8; display:flex; justify-content:space-between;}
+  .streak-chip{display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,.12); border-radius:20px; padding:4px 10px; font-size:12px; margin-top:6px;}
+
+  .stars-summary{
+    display:flex; align-items:center; gap:12px; justify-content:center;
+    background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px;
+    padding:14px 20px; margin:20px auto 0; max-width:360px;
+  }
+  .stars-summary-icon{font-size:34px;}
+  .stars-summary-num{font-size:22px; font-weight:800; line-height:1.1;}
+  .stars-summary-label{font-size:12px; opacity:.75;}
+
+  .bonus-row{display:flex; gap:10px; margin:14px 0;}
+  .bonus-chip{
+    flex:1; background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px;
+    padding:10px 8px; text-align:center; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .bonus-chip.done{background:rgba(34,197,94,.25); border-color:rgba(34,197,94,.5);}
+  .bonus-emoji{font-size:22px;}
+
+  /* ---------- board path (winding adventure map) ---------- */
+  .path-section{margin:22px 0 8px;}
+  .path-title{font-size:14px; font-weight:700; opacity:.85; margin-bottom:10px;}
+  .map-wrap{
+    position:relative; width:100%; max-width:360px; margin:0 auto; border-radius:22px; overflow:hidden;
+    background:linear-gradient(180deg,#2f5233 0%,#3c6b3f 45%,#4d7c4d 100%);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .island-theme .map-wrap{ background:linear-gradient(180deg,#0e7490 0%,#0f8b93 45%,#22c3d4 100%); }
+  .map-road{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .road-path-bg{ fill:none; stroke:#d8c48a; stroke-width:22; stroke-linecap:round; stroke-linejoin:round; opacity:.92; }
+  .road-path-line{ fill:none; stroke:#a9884f; stroke-width:3; stroke-dasharray:9 11; stroke-linecap:round; }
+  .map-scenery{
+    position:absolute; font-size:26px; transform:translate(-50%,-50%); opacity:.8;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); pointer-events:none; z-index:0;
+  }
+  .map-node{ position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:5px; z-index:2; }
+  .tile-btn{
+    width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.16); border:2px solid rgba(255,255,255,.35);
+    display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; position:relative;
+    box-shadow:0 3px 6px rgba(0,0,0,.3);
+  }
+  .tile-btn.tile-done{background:linear-gradient(160deg,var(--good),#16a34a); border-color:#4ade80;}
+  .tile-btn.tile-active{box-shadow:0 0 0 4px rgba(255,255,255,.18); animation:pulse 1.6s infinite;}
+  .tile-btn.tile-goal{background:linear-gradient(160deg,var(--gold),#f59e0b); border-color:#fde68a; width:58px; height:58px; font-size:28px;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(255,255,255,.12)} 50%{box-shadow:0 0 0 9px rgba(255,255,255,.05)}}
+  .tile-check{position:absolute; top:-4px; left:-4px; background:#16a34a; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center;}
+  .tile-label{
+    font-size:10.5px; text-align:center; line-height:1.2; max-width:76px; color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.7); font-weight:600;
+  }
+  .path-avatar-token{
+    position:absolute; font-size:32px; transform:translate(-50%,-125%); z-index:3;
+    transition:left .55s cubic-bezier(.34,1.4,.64,1), top .55s cubic-bezier(.34,1.4,.64,1);
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));
+  }
+
+  /* ---------- generic modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(6,6,20,.82); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:18px; animation:fadeIn .25s ease;
+  }
+  .modal-card{
+    background:linear-gradient(160deg,#221a4d,#1a1333); border:1px solid rgba(255,255,255,.15); border-radius:22px;
+    padding:24px 20px; max-width:380px; width:100%; text-align:center; max-height:88vh; overflow-y:auto;
+  }
+  .modal-title{font-size:20px; font-weight:800; margin-bottom:6px;}
+  .modal-sub{font-size:13px; opacity:.75; margin-bottom:16px;}
+  .modal-btn{
+    background:var(--quest-accent); color:#fff; padding:12px 20px; border-radius:14px; font-size:15px; font-weight:700; width:100%; margin-top:8px;
+  }
+  .modal-btn.secondary{background:rgba(255,255,255,.1);}
+  .modal-btn.danger{background:var(--danger);}
+
+  /* ---------- timer ---------- */
+  .timer-avatar-wrap{
+    width:200px; height:200px; margin:6px auto 18px; position:relative; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.06), transparent 70%);
+  }
+  .timer-ring{position:absolute; inset:0; border-radius:50%; padding:5px;
+    background:conic-gradient(var(--gold) calc(var(--p,0)*1%), rgba(255,255,255,.12) 0);
+    animation:spin 6s linear infinite;
+  }
+  @keyframes spin{from{filter:hue-rotate(0deg)} to{filter:hue-rotate(20deg)}}
+  .timer-avatar-inner{position:absolute; inset:6px; border-radius:50%; background:#1a1333; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .timer-avatar-grey, .timer-avatar-color{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:120px;
+  }
+  .timer-avatar-grey{filter:grayscale(1) brightness(.35);}
+  .timer-avatar-color{
+    clip-path: inset(calc(100% - var(--p,0)*1%) 0 0 0);
+    filter: drop-shadow(0 0 14px var(--gold));
+    transition:clip-path .3s linear;
+  }
+  .timer-clock{font-size:34px; font-weight:800; font-variant-numeric:tabular-nums; margin-bottom:2px;}
+  .timer-task-name{font-size:14px; opacity:.8; margin-bottom:14px;}
+
+  /* ---------- trivia ---------- */
+  .trivia-progress{font-size:12px; opacity:.7; margin-bottom:10px;}
+  .trivia-prompt{font-size:64px; font-weight:800; margin:10px 0 20px;}
+  .trivia-prompt-nums{font-size:34px; font-weight:800; margin:10px 0 20px; direction:ltr;}
+  .trivia-choices{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .trivia-choice{background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.2); border-radius:16px; padding:14px 4px; font-size:34px; color:#fff;}
+  .trivia-choice.wrong-flash{background:rgba(239,68,68,.5); border-color:var(--danger);}
+  .trivia-choice.right-flash{background:rgba(34,197,94,.5); border-color:var(--good);}
+
+  /* ---------- dinner steps ---------- */
+  .dinner-steps{display:flex; flex-direction:column; gap:10px; margin:14px 0;}
+  .dinner-step{display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.08); border-radius:14px; padding:12px; font-size:16px; text-align:right;}
+  .dinner-step.done{background:rgba(34,197,94,.25);}
+  .dinner-step-emoji{font-size:30px;}
+  .dinner-step-check{margin-inline-start:auto; font-size:20px;}
+
+  /* ---------- admin ---------- */
+  .admin-wrap{min-height:100vh; padding:18px 14px 60px; background:#161029;}
+  .admin-card{background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px; padding:16px; margin-bottom:14px;}
+  .admin-card h3{margin:0 0 10px; font-size:16px;}
+  .field-row{display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:13px;}
+  .field-row label{width:90px; opacity:.8; flex-shrink:0;}
+  select, input[type=time]{background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:7px 8px; font-size:13px; font-family:inherit;}
+  .day-checks{display:flex; gap:4px; flex-wrap:wrap;}
+  .day-check{background:rgba(255,255,255,.1); border-radius:8px; padding:6px 8px; font-size:11px; border:1px solid rgba(255,255,255,.2);}
+  .day-check.on{background:var(--quest-accent);}
+  .saved-flash{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--good); padding:8px 18px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none;}
+  .saved-flash.show{opacity:1;}
+
+  /* ---------- confetti ---------- */
+  .confetti-piece{position:fixed; top:-20px; width:9px; height:14px; z-index:99; border-radius:2px; animation:fall linear forwards; pointer-events:none;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg); opacity:.3;}}
+
+  .avatar-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0;}
+  .avatar-opt{background:rgba(255,255,255,.08); border:2px solid transparent; border-radius:16px; padding:14px 6px; display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .avatar-opt.selected{border-color:var(--gold); background:rgba(251,191,36,.18);}
+  .avatar-opt-emoji{font-size:36px;}
+  .avatar-opt-name{font-size:11px;}
+
+  .lock-wrap{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 0%, #4c1d95, #0f0c29 70%); padding:24px;
+  }
+  .lock-card{background:var(--card-bg); border:1px solid var(--card-border); border-radius:20px; padding:28px 24px; max-width:340px; width:100%; text-align:center;}
+  .lock-input{
+    width:100%; text-align:center; font-size:22px; letter-spacing:4px; padding:12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; margin:16px 0; font-family:inherit;
+  }
+  .lock-error{color:#f87171; font-size:13px; min-height:18px; margin-bottom:4px;}
+  .load-error-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== CONFIG / DATA ===================== */
+
+const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+const CHILDREN_CONFIG = {
+  yair:   { name:'יאיר',  age:11, track:'quest'  },
+  eitan:  { name:'איתן',  age:9,  track:'quest'  },
+  yehali: { name:'יהלי',  age:6,  track:'island' },
+  erel:   { name:'אראל',  age:6,  track:'island' },
+};
+
+const QUEST_AVATARS = [
+  {id:'ninja',    emoji:'🥷', name:'נינג\'ה'},
+  {id:'hero',     emoji:'🦸', name:'גיבור על'},
+  {id:'robot',    emoji:'🤖', name:'רובוט'},
+  {id:'dragon',   emoji:'🐉', name:'רוכב דרקונים'},
+  {id:'astro',    emoji:'🧑‍🚀', name:'אסטרונאוט'},
+  {id:'wizard',   emoji:'🧙', name:'קוסם'},
+];
+
+const ISLAND_AVATARS = [
+  {id:'fox',     emoji:'🦊', name:'שועל'},
+  {id:'bear',    emoji:'🐻', name:'דוב'},
+  {id:'bunny',   emoji:'🐰', name:'ארנב'},
+  {id:'turtle',  emoji:'🐢', name:'צב'},
+  {id:'dolphin', emoji:'🐬', name:'דולפין'},
+  {id:'lion',    emoji:'🦁', name:'אריה'},
+];
+
+const SURPRISES = ['מנה מיוחדת בארוחה 🍕','משחק משפחתי מיוחד הערב 🎲','קינוח מפתיע 🍨','סרט משפחתי הערב 🍿'];
+
+const LETTERS = [
+  {letter:'א', word:'אריה', emoji:'🦁'}, {letter:'ב', word:'בית', emoji:'🏠'},
+  {letter:'ג', word:'גמל', emoji:'🐫'}, {letter:'ד', word:'דג', emoji:'🐟'},
+  {letter:'ה', word:'הר', emoji:'⛰️'}, {letter:'ו', word:'ורד', emoji:'🌹'},
+  {letter:'ז', word:'זברה', emoji:'🦓'}, {letter:'ח', word:'חתול', emoji:'🐱'},
+  {letter:'ט', word:'טלפון', emoji:'📞'}, {letter:'י', word:'ים', emoji:'🌊'},
+  {letter:'כ', word:'כלב', emoji:'🐶'}, {letter:'ל', word:'לב', emoji:'❤️'},
+  {letter:'מ', word:'מטריה', emoji:'☂️'}, {letter:'נ', word:'נמר', emoji:'🐅'},
+  {letter:'ס', word:'סוס', emoji:'🐴'}, {letter:'ע', word:'עץ', emoji:'🌳'},
+  {letter:'פ', word:'פיל', emoji:'🐘'}, {letter:'צ', word:'ציפור', emoji:'🐦'},
+  {letter:'ק', word:'קוף', emoji:'🐒'}, {letter:'ר', word:'רכבת', emoji:'🚂'},
+  {letter:'ש', word:'שמש', emoji:'☀️'}, {letter:'ת', word:'תות', emoji:'🍓'},
+];
+
+const DINNER_STEPS = [
+  {icon:'🧼', label:'שטיפת ידיים'},
+  {icon:'🍽️', label:'הבאת צלחות'},
+  {icon:'🥤', label:'כוסות ומפיות'},
+  {icon:'📣', label:'הזמנת המשפחה לשולחן'},
+];
+
+const XP_PER_LEVEL = 100;
+const READING_SECONDS = 15*60;
+const BOARDGAME_SECONDS = 60*60;
+
+/* ===================== SUPABASE CONFIG ===================== */
+/* מלאו כאן את הפרטים מפרויקט ה-Supabase שלכם (הוראות בקובץ supabase-schema.sql ובשיחה). */
+const SUPABASE_URL = 'https://jrntbdgepcskjjzcqwcp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpybnRiZGdlcGNza2pqemNxd2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMjk2NzgsImV4cCI6MjA5ODkwNTY3OH0.MyTRXEvuc1CZqhgR55Dap5wUfBEI6Jmv6p8v7fsNMg8';
+const APP_PASSCODE = '0987'; // קוד סודי משפחתי - שנו את זה לקוד משלכם
+
+const supabase = (SUPABASE_URL.startsWith('http'))
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+/* ===================== STORAGE (Supabase) ===================== */
+
+async function loadStateFromSupabase(){
+  const s = defaultState();
+  const [childRes, schedRes, dailyRes] = await Promise.all([
+    supabase.from('children').select('*'),
+    supabase.from('schedule').select('*'),
+    supabase.from('daily_progress').select('*'),
+  ]);
+  if(childRes.error) throw childRes.error;
+  if(schedRes.error) throw schedRes.error;
+  if(dailyRes.error) throw dailyRes.error;
+
+  (childRes.data||[]).forEach(row=>{
+    const c = s.children[row.id];
+    if(!c) return;
+    c.avatar = row.avatar;
+    c.xp = row.xp;
+    c.level = row.level;
+    c.streak = row.streak;
+    c.stars = row.stars;
+    c.lastActiveDate = row.last_active_date;
+  });
+  (schedRes.data||[]).forEach(row=>{
+    if(!s.schedule[row.child_id]) return;
+    s.schedule[row.child_id] = {
+      lessonDay: row.lesson_day, lessonTime: row.lesson_time||'',
+      sportDays: row.sport_days||[], sportTime: row.sport_time||'', dinnerDay: row.dinner_day,
+    };
+  });
+  (dailyRes.data||[]).forEach(row=>{
+    const c = s.children[row.child_id];
+    if(!c) return;
+    c.daily[row.date] = {
+      done: row.done||{}, timers: row.timers||{}, dinnerSteps: row.dinner_steps||{},
+      surpriseShown: !!row.surprise_shown, achieved: !!row.achieved, bonusStarAwarded: !!row.bonus_star_awarded,
+    };
+  });
+  return s;
+}
+
+async function persistChildToSupabase(childId){
+  const c = STATE.children[childId];
+  const sched = STATE.schedule[childId];
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  const [childRes, schedRes, dailyRes] = await Promise.all([
+    supabase.from('children').upsert({
+      id: childId, avatar: c.avatar, xp: c.xp, level: c.level, streak: c.streak, stars: c.stars,
+      last_active_date: c.lastActiveDate,
+    }),
+    supabase.from('schedule').upsert({
+      child_id: childId, lesson_day: sched.lessonDay, lesson_time: sched.lessonTime,
+      sport_days: sched.sportDays, sport_time: sched.sportTime, dinner_day: sched.dinnerDay,
+    }),
+    supabase.from('daily_progress').upsert({
+      child_id: childId, date: dateStr, done: daily.done, timers: daily.timers,
+      dinner_steps: daily.dinnerSteps, surprise_shown: daily.surpriseShown,
+      achieved: daily.achieved, bonus_star_awarded: !!daily.bonusStarAwarded,
+    }),
+  ]);
+  if(childRes.error) console.error('sync error (children):', childRes.error);
+  if(schedRes.error) console.error('sync error (schedule):', schedRes.error);
+  if(dailyRes.error) console.error('sync error (daily_progress):', dailyRes.error);
+}
+
+/* ===================== STATE ===================== */
+
+function freshChildState(id){
+  const cfg = CHILDREN_CONFIG[id];
+  return {
+    avatar:null,
+    xp:0, level:1, streak:0, stars:0,
+    lastActiveDate:null, lastCompleteDate:null,
+    daily:{}, // dateStr -> {done:{taskId:true}, timers:{taskId:{startedAt,duration}}, dinnerSteps:{idx:true}, surpriseShown:false, achieved:false}
+  };
+}
+
+let STATE = null;
+
+function defaultState(){
+  const s = { children:{}, schedule:{} };
+  Object.keys(CHILDREN_CONFIG).forEach(id=>{
+    s.children[id] = freshChildState(id);
+    s.schedule[id] = { lessonDay:null, lessonTime:'', sportDays:[], sportTime:'', dinnerDay:null };
+  });
+  return s;
+}
+
+async function initState(){
+  STATE = await loadStateFromSupabase();
+}
+
+let saveTimer = null;
+let pendingChildIds = new Set();
+function persist(childId){
+  if(childId) pendingChildIds.add(childId);
+  else Object.keys(CHILDREN_CONFIG).forEach(id=>pendingChildIds.add(id));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushPersist, 400);
+}
+async function flushPersist(){
+  const ids = [...pendingChildIds];
+  pendingChildIds.clear();
+  await Promise.all(ids.map(id=>persistChildToSupabase(id).catch(e=>console.error('persist failed for', id, e))));
+}
+
+/* ===================== UTILS ===================== */
+
+function todayKey(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset()*60000;
+  return new Date(d.getTime()-tz).toISOString().slice(0,10);
+}
+function todayDow(){ return new Date().getDay(); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function getAvatarList(track){ return track==='quest' ? QUEST_AVATARS : ISLAND_AVATARS; }
+function findAvatar(track, id){ return getAvatarList(track).find(a=>a.id===id); }
+
+function ensureDaily(childId, dateStr){
+  const c = STATE.children[childId];
+  if(!c.daily[dateStr]){
+    c.daily[dateStr] = { done:{}, timers:{}, dinnerSteps:{}, surpriseShown:false, achieved:false };
+  }
+  return c.daily[dateStr];
+}
+
+function checkStreakRollover(childId){
+  const c = STATE.children[childId];
+  const today = todayKey();
+  if(c.lastActiveDate && c.lastActiveDate !== today){
+    const lastDaily = c.daily[c.lastActiveDate];
+    if(!lastDaily || !lastDaily.achieved){
+      c.streak = 0;
+    }
+  }
+  c.lastActiveDate = today;
+}
+
+function fmtTime(totalSeconds){
+  const s = Math.max(0, Math.ceil(totalSeconds));
+  const m = Math.floor(s/60);
+  const sec = s%60;
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+function spawnConfetti(){
+  const colors = ['#fbbf24','#8b5cf6','#22d3ee','#22c55e','#f472b6','#f97316'];
+  const container = document.getElementById('app');
+  for(let i=0;i<36;i++){
+    const el = document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left = Math.random()*100+'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (2+Math.random()*1.5)+'s';
+    el.style.top = '-20px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 3800);
+  }
+}
+
+/* ===================== TASK LISTS ===================== */
+
+function getQuestTasks(childId, dateStr){
+  const sched = STATE.schedule[childId];
+  const dow = new Date(dateStr+'T12:00:00').getDay();
+  const tasks = [
+    {id:'reading', icon:'📖', label:'קריאה 15 דק\'', xp:10, type:'timer', duration:READING_SECONDS},
+    {id:'boardgame', icon:'🎲', label:'משחק קופסא שעה', xp:10, type:'timer', duration:BOARDGAME_SECONDS},
+    {id:'bed', icon:'🛏️', label:'סידור מיטה', xp:10, type:'check'},
+  ];
+  if(sched.lessonDay===dow){
+    tasks.push({id:'lesson', icon:'🎻', label:'שיעור פרטי', xp:15, type:'check'});
+  }
+  if(sched.sportDays && sched.sportDays.includes(dow)){
+    tasks.push({id:'sport', icon:'⚽', label:'בלייזספורט', xp:15, type:'check'});
+  }
+  if(sched.dinnerDay===dow){
+    tasks.push({id:'dinner1', icon:'🍽️', label:'עריכת שולחן', xp:12, type:'check'});
+    tasks.push({id:'dinner2', icon:'🧹', label:'פינוי שולחן', xp:12, type:'check'});
+  }
+  return tasks;
+}
+
+function getIslandTasks(childId, dateStr){
+  const sched = STATE.schedule[childId];
+  const dow = new Date(dateStr+'T12:00:00').getDay();
+  const tasks = [
+    {id:'trivia', icon:'🔤', label:'אותיות ומספרים', xp:15, type:'trivia'},
+  ];
+  if(sched.dinnerDay===dow){
+    tasks.push({id:'dinnerhelp', icon:'🍽️', label:'עזרה בארוחה', xp:15, type:'dinnersteps'});
+  }
+  return tasks;
+}
+
+function getTasksFor(childId, dateStr){
+  const track = CHILDREN_CONFIG[childId].track;
+  return track==='quest' ? getQuestTasks(childId, dateStr) : getIslandTasks(childId, dateStr);
+}
+
+function isTaskDone(childId, dateStr, taskId){
+  const daily = ensureDaily(childId, dateStr);
+  return !!daily.done[taskId];
+}
+
+function completedCount(childId, dateStr){
+  const tasks = getTasksFor(childId, dateStr);
+  return tasks.filter(t=>isTaskDone(childId,dateStr,t.id)).length;
+}
+
+function addXP(childId, amount){
+  const c = STATE.children[childId];
+  const track = CHILDREN_CONFIG[childId].track;
+  c.xp += amount;
+  if(track==='quest'){
+    c.level = Math.floor(c.xp/XP_PER_LEVEL)+1;
+  }
+}
+
+function markTaskDone(childId, taskId, xp){
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  if(daily.done[taskId]) return;
+  daily.done[taskId] = true;
+  addXP(childId, xp);
+  persist();
+  checkForAchievement(childId, dateStr);
+}
+
+function checkForAchievement(childId, dateStr){
+  const tasks = getTasksFor(childId, dateStr);
+  const daily = ensureDaily(childId, dateStr);
+  const allDone = tasks.length>0 && tasks.every(t=>daily.done[t.id]);
+  if(allDone && !daily.achieved){
+    daily.achieved = true;
+    const c = STATE.children[childId];
+    const track = CHILDREN_CONFIG[childId].track;
+    c.stars += 1;
+    if(track==='quest'){
+      c.streak += 1;
+    }
+    persist();
+    showAchievementModal(childId);
+  }
+  // dinner duty double-step surprise (quest only)
+  if(CHILDREN_CONFIG[childId].track==='quest' && daily.done['dinner1'] && daily.done['dinner2'] && !daily.surpriseShown){
+    daily.surpriseShown = true;
+    addXP(childId, 15);
+    persist();
+    setTimeout(()=>showSurpriseModal(childId), allDone?900:150);
+  }
+}
+
+/* ===================== ROUTER / RENDER ===================== */
+
+let VIEW = { screen:'profiles', childId:null, modal:null, modalData:null };
+let tickInterval = null;
+
+function render(){
+  const app = document.getElementById('app');
+  if(VIEW.screen==='profiles') app.innerHTML = renderProfiles();
+  else if(VIEW.screen==='avatarPicker') app.innerHTML = renderAvatarPicker(VIEW.childId);
+  else if(VIEW.screen==='home') app.innerHTML = renderHome(VIEW.childId);
+  else if(VIEW.screen==='admin') app.innerHTML = renderAdmin();
+  renderModal();
+}
+
+function setScreen(screen, childId){
+  VIEW = { screen, childId:childId||null, modal:null, modalData:null };
+  render();
+}
+
+/* ---- Profiles ---- */
+function renderProfiles(){
+  const cards = Object.keys(CHILDREN_CONFIG).map(id=>{
+    const cfg = CHILDREN_CONFIG[id];
+    const c = STATE.children[id];
+    const av = c.avatar ? findAvatar(cfg.track, c.avatar) : null;
+    return `<div class="profile-card" data-action="openChild" data-child="${id}">
+      <div class="profile-avatar">${av ? av.emoji : '❔'}</div>
+      <div class="profile-name">${cfg.name}</div>
+      <div class="profile-track">${cfg.track==='quest' ? 'יומן מסע' : 'אי הקיץ'}</div>
+    </div>`;
+  }).join('');
+  return `<div class="profiles-wrap screen">
+    <button class="gear-btn" data-action="openAdmin">⚙️</button>
+    <div class="app-title">🌞 מסע הקיץ</div>
+    <div class="app-subtitle">מי אתה?</div>
+    <div class="profile-grid">${cards}</div>
+  </div>`;
+}
+
+function openChild(childId){
+  checkStreakRollover(childId);
+  persist();
+  const c = STATE.children[childId];
+  if(!c.avatar){ setScreen('avatarPicker', childId); }
+  else{ setScreen('home', childId); }
+}
+
+/* ---- Avatar Picker ---- */
+function renderAvatarPicker(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const list = getAvatarList(cfg.track);
+  const opts = list.map(a=>`
+    <div class="avatar-opt ${c.avatar===a.id?'selected':''}" data-action="pickAvatar" data-child="${childId}" data-avatar="${a.id}">
+      <div class="avatar-opt-emoji">${a.emoji}</div>
+      <div class="avatar-opt-name">${a.name}</div>
+    </div>`).join('');
+  return `<div class="${cfg.track==='quest'?'quest-theme':'island-theme'} home-wrap screen">
+    <div class="home-header">
+      <button class="back-btn" data-action="backToProfiles">→</button>
+      <div class="header-name">בחר/י דמות, ${cfg.name}</div>
+    </div>
+    <div class="avatar-grid">${opts}</div>
+    ${c.avatar ? `<button class="modal-btn" data-action="confirmAvatar" data-child="${childId}">המשך</button>` : ''}
+  </div>`;
+}
+
+function pickAvatar(childId, avatarId){
+  STATE.children[childId].avatar = avatarId;
+  persist();
+  render();
+}
+
+/* ---- Home ---- */
+function renderHome(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  return cfg.track==='quest' ? renderQuestHome(childId) : renderIslandHome(childId);
+}
+
+const MAP_WIDTH = 320;
+const MAP_ROW_HEIGHT = 98;
+const MAP_TOP_PAD = 52;
+const MAP_LEFT_X = 96;
+const MAP_RIGHT_X = 224;
+
+function computeMapLayout(nodeCount){
+  const positions = [];
+  for(let i=0;i<nodeCount;i++){
+    const x = (i%2===0) ? MAP_LEFT_X : MAP_RIGHT_X;
+    const y = (nodeCount-1-i)*MAP_ROW_HEIGHT + MAP_TOP_PAD;
+    positions.push({x,y});
+  }
+  const height = nodeCount<=1 ? MAP_TOP_PAD*2 : (nodeCount-1)*MAP_ROW_HEIGHT + MAP_TOP_PAD*2;
+  return { positions, width:MAP_WIDTH, height };
+}
+
+function buildRoadPath(positions){
+  if(positions.length<2) return '';
+  let d = `M ${positions[0].x} ${positions[0].y}`;
+  for(let i=1;i<positions.length;i++){
+    const p0=positions[i-1], p1=positions[i];
+    const midY = (p0.y+p1.y)/2;
+    d += ` C ${p0.x} ${midY}, ${p1.x} ${midY}, ${p1.x} ${p1.y}`;
+  }
+  return d;
+}
+
+const QUEST_SCENERY = [
+  {e:'🌲',xr:0.06,yr:0.04}, {e:'⛰️',xr:0.9,yr:0.03}, {e:'🌳',xr:0.05,yr:0.94},
+  {e:'🌲',xr:0.92,yr:0.4}, {e:'🌳',xr:0.08,yr:0.62}, {e:'🌲',xr:0.9,yr:0.75},
+];
+const ISLAND_SCENERY = [
+  {e:'🌴',xr:0.06,yr:0.05}, {e:'🌊',xr:0.9,yr:0.92}, {e:'🐚',xr:0.07,yr:0.9},
+  {e:'🌴',xr:0.92,yr:0.38}, {e:'⛱️',xr:0.08,yr:0.6}, {e:'🌊',xr:0.9,yr:0.15},
+];
+
+function renderPathTrack(childId, dateStr, tasks){
+  const done = completedCount(childId, dateStr);
+  const total = tasks.length;
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const av = findAvatar(cfg.track, c.avatar);
+  const goalDone = total>0 && done===total;
+  const goalIcon = goalDone ? '🏆' : (cfg.track==='quest' ? '🏰' : '🏝️');
+
+  const nodeDefs = tasks.concat([{ id:'__goal__', icon:goalIcon, label:'יעד היום', isGoal:true }]);
+  const { positions, width, height } = computeMapLayout(nodeDefs.length);
+  const roadPath = buildRoadPath(positions);
+  let tokenIndex = 0;
+  if(goalDone){
+    tokenIndex = positions.length-1;
+  }else{
+    let maxDoneIdx = -1;
+    tasks.forEach((t,i)=>{ if(isTaskDone(childId, dateStr, t.id)) maxDoneIdx = i; });
+    tokenIndex = maxDoneIdx===-1 ? 0 : maxDoneIdx;
+  }
+  const tokenPos = positions[tokenIndex];
+
+  const scenery = (cfg.track==='quest' ? QUEST_SCENERY : ISLAND_SCENERY)
+    .map(s=>`<span class="map-scenery" style="left:${s.xr*100}%; top:${s.yr*100}%">${s.e}</span>`).join('');
+
+  const nodesHtml = nodeDefs.map((t,i)=>{
+    const pos = positions[i];
+    const leftPct = (pos.x/width)*100, topPct = (pos.y/height)*100;
+    if(t.isGoal){
+      return `<div class="map-node" style="left:${leftPct}%; top:${topPct}%">
+        <div class="tile-btn tile-goal ${goalDone?'tile-done':''}">${t.icon}</div>
+        <div class="tile-label">${t.label}</div>
+      </div>`;
+    }
+    const isDone = isTaskDone(childId, dateStr, t.id);
+    const isActive = !isDone && i===done;
+    return `<div class="map-node" style="left:${leftPct}%; top:${topPct}%">
+      <button class="tile-btn ${isDone?'tile-done':''} ${isActive?'tile-active':''}" data-action="openTask" data-child="${childId}" data-task="${t.id}">
+        ${isDone ? `<span class="tile-check">✓</span>` : ''}
+        ${t.icon}
+      </button>
+      <div class="tile-label">${t.label}</div>
+    </div>`;
+  }).join('');
+
+  const tokenLeftPct = (tokenPos.x/width)*100, tokenTopPct = (tokenPos.y/height)*100;
+
+  return `<div class="path-section">
+    <div class="path-title">המסע של היום (${done}/${total})</div>
+    <div class="map-wrap" style="aspect-ratio:${width}/${height}">
+      <svg class="map-road" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+        <path d="${roadPath}" class="road-path-bg"/>
+        <path d="${roadPath}" class="road-path-line"/>
+      </svg>
+      ${scenery}
+      ${nodesHtml}
+      <div class="path-avatar-token" style="left:${tokenLeftPct}%; top:${tokenTopPct}%">${av?av.emoji:'🙂'}</div>
+    </div>
+  </div>`;
+}
+
+const QUEST_BONUSES = [
+  {id:'wake', icon:'☀️', label:'אמרתי בוקר טוב לאמא או אבא', xp:5},
+  {id:'screentime', icon:'📵', label:'עשיתי הפסקה של שעה מהמסך', xp:5},
+];
+
+function renderStarsSummary(childId){
+  const c = STATE.children[childId];
+  return `<div class="stars-summary">
+    <span class="stars-summary-icon">⭐</span>
+    <div>
+      <div class="stars-summary-num">${c.stars}</div>
+      <div class="stars-summary-label">כוכבים נאספו</div>
+    </div>
+  </div>`;
+}
+
+function renderQuestHome(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const av = findAvatar('quest', c.avatar);
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  const tasks = getQuestTasks(childId, dateStr);
+  const xpIntoLevel = c.xp % XP_PER_LEVEL;
+  const bonusChips = QUEST_BONUSES.map(b=>{
+    const done = !!daily.done[b.id];
+    return `<button class="bonus-chip ${done?'done':''}" data-action="toggleBonus" data-child="${childId}" data-bonus="${b.id}" data-xp="${b.xp}" ${done?'disabled':''}>
+      <span class="bonus-emoji">${b.icon}</span>
+      <span>${b.label}</span>
+      ${done ? '<span>✓ +'+b.xp+' XP</span>' : '<span>+'+b.xp+' XP</span>'}
+    </button>`;
+  }).join('');
+
+  return `<div class="quest-theme home-wrap screen">
+    <div class="home-header">
+      <button class="back-btn" data-action="backToProfiles">→</button>
+      <div class="header-avatar">${av?av.emoji:'🙂'}</div>
+      <div>
+        <div class="header-name">${cfg.name}</div>
+        <div class="header-sub">רמה ${c.level}</div>
+      </div>
+      <button class="change-avatar-btn" data-action="changeAvatar" data-child="${childId}">החלף דמות</button>
+    </div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${xpIntoLevel}%"></div></div>
+    <div class="xp-label"><span>${xpIntoLevel} / ${XP_PER_LEVEL} XP</span><span>סה"כ ${c.xp} XP</span></div>
+    <div class="streak-chip">🔥 רצף ${c.streak} ימים</div>
+    <div class="bonus-row">${bonusChips}</div>
+    ${renderPathTrack(childId, dateStr, tasks)}
+    ${renderStarsSummary(childId)}
+  </div>`;
+}
+
+function renderIslandHome(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const av = findAvatar('island', c.avatar);
+  const dateStr = todayKey();
+  const tasks = getIslandTasks(childId, dateStr);
+  return `<div class="island-theme home-wrap screen">
+    <div class="home-header">
+      <button class="back-btn" data-action="backToProfiles">→</button>
+      <div class="header-avatar">${av?av.emoji:'🙂'}</div>
+      <div>
+        <div class="header-name">${cfg.name}</div>
+        <div class="header-sub">⭐ ${c.stars} כוכבים</div>
+      </div>
+      <button class="change-avatar-btn" data-action="changeAvatar" data-child="${childId}">החלף דמות</button>
+    </div>
+    ${renderPathTrack(childId, dateStr, tasks)}
+    ${renderStarsSummary(childId)}
+  </div>`;
+}
+
+function backToProfiles(){ setScreen('profiles'); }
+function changeAvatar(childId){ setScreen('avatarPicker', childId); }
+
+function checkBonusStarAward(childId){
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  const allBonusesDone = QUEST_BONUSES.every(b=>daily.done[b.id]);
+  if(allBonusesDone && !daily.bonusStarAwarded){
+    daily.bonusStarAwarded = true;
+    STATE.children[childId].stars += 1;
+    persist();
+  }
+}
+
+function toggleBonus(childId, bonusId, xp){
+  markTaskDone(childId, bonusId, xp);
+  checkBonusStarAward(childId);
+  render();
+}
+
+function openTask(childId, taskId){
+  const dateStr = todayKey();
+  const tasks = getTasksFor(childId, dateStr);
+  const task = tasks.find(t=>t.id===taskId);
+  if(!task) return;
+  if(isTaskDone(childId, dateStr, taskId)) return;
+  if(task.type==='check'){
+    markTaskDone(childId, taskId, task.xp);
+    render();
+  }else if(task.type==='timer'){
+    openTimerModal(childId, task);
+  }else if(task.type==='trivia'){
+    openTriviaModal(childId, task);
+  }else if(task.type==='dinnersteps'){
+    openDinnerStepsModal(childId, task);
+  }
+}
+
+/* ===================== MODALS ===================== */
+
+function renderModal(){
+  const existing = document.getElementById('modalRoot');
+  if(existing) existing.remove();
+  if(!VIEW.modal) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'modalRoot';
+  wrap.innerHTML = MODAL_RENDERERS[VIEW.modal](VIEW.modalData);
+  document.body.appendChild(wrap);
+  if(VIEW.modal==='timer') startTimerTick();
+}
+
+function closeModal(){
+  stopTimerTick();
+  VIEW.modal = null; VIEW.modalData = null;
+  render();
+}
+
+const MODAL_RENDERERS = {
+  achievement: (data)=>`<div class="modal-overlay"><div class="modal-card">
+    <div style="font-size:54px;">🎉🏆🎉</div>
+    <div class="modal-title">כל הכבוד, ${data.name}!</div>
+    <div class="modal-sub">השלמת את מסע היום כולו!</div>
+    <button class="modal-btn" data-action="closeModal">מעולה!</button>
+  </div></div>`,
+  surprise: (data)=>`<div class="modal-overlay"><div class="modal-card">
+    <div style="font-size:54px;">🎁</div>
+    <div class="modal-title">הפתעה!</div>
+    <div class="modal-sub" style="font-size:16px;">${data.surprise}</div>
+    <div class="modal-sub">+15 XP בונוס</div>
+    <button class="modal-btn" data-action="closeModal">יש!</button>
+  </div></div>`,
+  timer: (data)=>renderTimerModal(data),
+  trivia: (data)=>renderTriviaModal(data),
+  dinnersteps: (data)=>renderDinnerStepsModal(data),
+};
+
+function showAchievementModal(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  VIEW.modal='achievement'; VIEW.modalData={name:cfg.name};
+  spawnConfetti();
+  render();
+}
+function showSurpriseModal(childId){
+  const surprise = SURPRISES[Math.floor(Math.random()*SURPRISES.length)];
+  VIEW.modal='surprise'; VIEW.modalData={surprise};
+  spawnConfetti();
+  render();
+}
+
+/* ---- Timer modal ---- */
+function openTimerModal(childId, task){
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  if(!daily.timers[task.id]){
+    daily.timers[task.id] = { startedAt: Date.now(), duration: task.duration };
+    persist();
+  }
+  VIEW.modal='timer';
+  VIEW.modalData={childId, task};
+  render();
+}
+
+function renderTimerModal(data){
+  const {childId, task} = data;
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const av = findAvatar(cfg.track, c.avatar);
+  const dateStr = todayKey();
+  const timerInfo = ensureDaily(childId, dateStr).timers[task.id];
+  const elapsed = (Date.now()-timerInfo.startedAt)/1000;
+  const pct = Math.min(100, Math.round((elapsed/timerInfo.duration)*100));
+  const remaining = timerInfo.duration - elapsed;
+  return `<div class="modal-overlay"><div class="modal-card">
+    <div class="modal-title">${task.icon} ${task.label}</div>
+    <div class="timer-task-name">הדמות שלך נטענת עד לסיום!</div>
+    <div class="timer-avatar-wrap" style="--p:${pct}">
+      <div class="timer-ring"></div>
+      <div class="timer-avatar-inner">
+        <div class="timer-avatar-grey">${av?av.emoji:'🙂'}</div>
+        <div class="timer-avatar-color" style="--p:${pct}">${av?av.emoji:'🙂'}</div>
+      </div>
+    </div>
+    <div id="timerClock" class="timer-clock">${fmtTime(remaining)}</div>
+    <button class="modal-btn secondary" data-action="cancelTimer" data-child="${childId}" data-task="${task.id}">בטל</button>
+  </div></div>`;
+}
+
+function startTimerTick(){
+  stopTimerTick();
+  tickInterval = setInterval(()=>{
+    if(!VIEW.modal || VIEW.modal!=='timer') { stopTimerTick(); return; }
+    const {childId, task} = VIEW.modalData;
+    const dateStr = todayKey();
+    const daily = ensureDaily(childId, dateStr);
+    const timerInfo = daily.timers[task.id];
+    if(!timerInfo){ stopTimerTick(); return; }
+    const elapsed = (Date.now()-timerInfo.startedAt)/1000;
+    if(elapsed >= timerInfo.duration){
+      delete daily.timers[task.id];
+      stopTimerTick();
+      markTaskDone(childId, task.id, task.xp);
+      if(VIEW.modal==='timer'){ VIEW.modal=null; VIEW.modalData=null; render(); }
+      return;
+    }
+    updateTimerDOM(elapsed, timerInfo.duration);
+  }, 500);
+}
+function stopTimerTick(){ if(tickInterval){ clearInterval(tickInterval); tickInterval=null; } }
+
+function updateTimerDOM(elapsed, duration){
+  const pct = Math.min(100, Math.round((elapsed/duration)*100));
+  const wrap = document.querySelector('.timer-avatar-wrap');
+  const colorLayer = document.querySelector('.timer-avatar-color');
+  const clock = document.getElementById('timerClock');
+  if(wrap) wrap.style.setProperty('--p', pct);
+  if(colorLayer) colorLayer.style.setProperty('--p', pct);
+  if(clock) clock.textContent = fmtTime(duration-elapsed);
+}
+
+function cancelTimer(childId, taskId){
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  delete daily.timers[taskId];
+  persist();
+  closeModal();
+}
+
+/* ---- Trivia modal (island) ---- */
+function makeLetterRound(){
+  const idx = Math.floor(Math.random()*LETTERS.length);
+  const target = LETTERS[idx];
+  const others = shuffle(LETTERS.filter((_,i)=>i!==idx)).slice(0,2);
+  const choices = shuffle([target, ...others]).map(c=>({display:c.emoji, correct:c.letter===target.letter}));
+  return { kind:'letter', prompt:target.letter, choices };
+}
+function makeNumberRound(){
+  const a = 1+Math.floor(Math.random()*8);
+  const b = 1+Math.floor(Math.random()*Math.max(1,(10-a)));
+  const sum = a+b;
+  const set = new Set([sum]);
+  let guard=0;
+  while(set.size<3 && guard<30){
+    guard++;
+    const cand = sum + (Math.floor(Math.random()*5)-2);
+    if(cand>=2 && cand<=10) set.add(cand);
+  }
+  const choices = shuffle([...set]).map(n=>({display:String(n), correct:n===sum}));
+  return { kind:'number', prompt:{a,b}, choices };
+}
+function makeRound(){ return Math.random()<0.5 ? makeLetterRound() : makeNumberRound(); }
+
+function openTriviaModal(childId, task){
+  VIEW.modal='trivia';
+  VIEW.modalData={ childId, task, roundIndex:0, total:5, round:makeRound(), flashIdx:null, flashType:null };
+  render();
+}
+
+function renderTriviaModal(data){
+  const {roundIndex, total, round} = data;
+  const promptHtml = round.kind==='letter'
+    ? `<div class="trivia-prompt">${round.prompt}</div>`
+    : `<div class="trivia-prompt-nums">${'🔵'.repeat(data.round.prompt.a)} + ${'🔵'.repeat(data.round.prompt.b)} = ?</div>`;
+  const choices = round.choices.map((ch,i)=>{
+    let cls='trivia-choice';
+    if(data.flashIdx===i) cls += data.flashType==='right' ? ' right-flash' : ' wrong-flash';
+    return `<button class="${cls}" data-action="triviaAnswer" data-idx="${i}">${ch.display}</button>`;
+  }).join('');
+  return `<div class="modal-overlay"><div class="modal-card">
+    <div class="trivia-progress">סבב ${roundIndex+1} מתוך ${total}</div>
+    ${promptHtml}
+    <div class="trivia-choices">${choices}</div>
+  </div></div>`;
+}
+
+function triviaAnswer(idx){
+  const data = VIEW.modalData;
+  const choice = data.round.choices[idx];
+  if(choice.correct){
+    data.flashIdx = idx; data.flashType='right';
+    render();
+    setTimeout(()=>{
+      if(!VIEW.modalData || VIEW.modal!=='trivia') return;
+      data.roundIndex += 1;
+      if(data.roundIndex >= data.total){
+        finishTrivia(data.childId, data.task);
+      }else{
+        data.round = makeRound();
+        data.flashIdx = null; data.flashType=null;
+        render();
+      }
+    }, 550);
+  }else{
+    data.flashIdx = idx; data.flashType='wrong';
+    render();
+    setTimeout(()=>{
+      if(!VIEW.modalData || VIEW.modal!=='trivia') return;
+      data.flashIdx = null; data.flashType=null;
+      render();
+    }, 550);
+  }
+}
+
+function finishTrivia(childId, task){
+  markTaskDone(childId, task.id, task.xp);
+  if(VIEW.modal==='trivia'){ VIEW.modal=null; VIEW.modalData=null; render(); }
+}
+
+/* ---- Dinner steps modal (island) ---- */
+function openDinnerStepsModal(childId, task){
+  const dateStr = todayKey();
+  const daily = ensureDaily(childId, dateStr);
+  VIEW.modal='dinnersteps';
+  VIEW.modalData={ childId, task, dateStr };
+  render();
+  void daily;
+}
+
+function renderDinnerStepsModal(data){
+  const {childId, dateStr} = data;
+  const daily = ensureDaily(childId, dateStr);
+  const steps = DINNER_STEPS.map((s,i)=>{
+    const done = !!daily.dinnerSteps[i];
+    return `<div class="dinner-step ${done?'done':''}" data-action="toggleDinnerStep" data-idx="${i}">
+      <span class="dinner-step-emoji">${s.icon}</span>
+      <span>${s.label}</span>
+      <span class="dinner-step-check">${done?'✅':'⬜'}</span>
+    </div>`;
+  }).join('');
+  const allDone = DINNER_STEPS.every((_,i)=>daily.dinnerSteps[i]);
+  return `<div class="modal-overlay"><div class="modal-card">
+    <div class="modal-title">🍽️ עזרה בארוחת ערב</div>
+    <div class="dinner-steps">${steps}</div>
+    ${allDone ? `<button class="modal-btn" data-action="finishDinnerSteps">סיימתי!</button>` : `<button class="modal-btn secondary" data-action="closeModal">סגור</button>`}
+  </div></div>`;
+}
+
+function toggleDinnerStep(idx){
+  const {childId, dateStr} = VIEW.modalData;
+  const daily = ensureDaily(childId, dateStr);
+  daily.dinnerSteps[idx] = !daily.dinnerSteps[idx];
+  persist();
+  render();
+}
+
+function finishDinnerSteps(){
+  const {childId, task} = VIEW.modalData;
+  markTaskDone(childId, task.id, task.xp);
+  if(VIEW.modal==='dinnersteps'){ VIEW.modal=null; VIEW.modalData=null; render(); }
+}
+
+/* ===================== ADMIN ===================== */
+
+function renderAdmin(){
+  const cards = Object.keys(CHILDREN_CONFIG).map(id=>{
+    const cfg = CHILDREN_CONFIG[id];
+    const sched = STATE.schedule[id];
+    const dayOpts = (val, action, extra)=>`<select data-action="${action}" data-child="${id}" ${extra||''}>
+      <option value="" ${val===null?'selected':''}>ללא</option>
+      ${DAY_NAMES.map((d,i)=>`<option value="${i}" ${val===i?'selected':''}>יום ${d}</option>`).join('')}
+    </select>`;
+    let extraFields = '';
+    if(cfg.track==='quest'){
+      extraFields = `
+        <div class="field-row"><label>שיעור פרטי</label>${dayOpts(sched.lessonDay,'setLessonDay')}
+          <input type="time" value="${sched.lessonTime||''}" data-action="setLessonTime" data-child="${id}"></div>
+        <div class="field-row"><label>ספורט - ימים</label>
+          <div class="day-checks">${DAY_NAMES.map((d,i)=>`<button class="day-check ${sched.sportDays.includes(i)?'on':''}" data-action="toggleSportDay" data-child="${id}" data-day="${i}">${d}</button>`).join('')}</div>
+        </div>
+        <div class="field-row"><label>שעת ספורט</label>
+          <input type="time" value="${sched.sportTime||''}" data-action="setSportTime" data-child="${id}"></div>`;
+    }
+    return `<div class="admin-card">
+      <h3>${cfg.name} (${cfg.track==='quest'?'יומן מסע':'אי הקיץ'})</h3>
+      ${extraFields}
+      <div class="field-row"><label>תורנות ארוחה</label>${dayOpts(sched.dinnerDay,'setDinnerDay')}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="admin-wrap screen">
+    <div class="home-header">
+      <button class="back-btn" data-action="backToProfiles">→</button>
+      <div class="header-name">מצב הורים</div>
+    </div>
+    ${cards}
+    <button class="modal-btn danger" data-action="requestReset">איפוס התקדמות כללי</button>
+    <div class="saved-flash" id="savedFlash">נשמר ✓</div>
+  </div>`;
+}
+
+function flashSaved(){
+  const el = document.getElementById('savedFlash');
+  if(!el) return;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 1200);
+}
+
+function setLessonDay(childId, val){
+  STATE.schedule[childId].lessonDay = val===''?null:parseInt(val,10);
+  persist(); flashSaved();
+}
+function setLessonTime(childId, val){ STATE.schedule[childId].lessonTime = val; persist(); flashSaved(); }
+function setSportTime(childId, val){ STATE.schedule[childId].sportTime = val; persist(); flashSaved(); }
+function toggleSportDay(childId, day){
+  const sched = STATE.schedule[childId];
+  const d = parseInt(day,10);
+  const idx = sched.sportDays.indexOf(d);
+  if(idx>=0) sched.sportDays.splice(idx,1); else sched.sportDays.push(d);
+  persist(); render(); flashSaved();
+}
+function setDinnerDay(childId, val){
+  STATE.schedule[childId].dinnerDay = val===''?null:parseInt(val,10);
+  persist(); flashSaved();
+}
+
+function requestReset(){
+  VIEW.modal = 'confirmReset';
+  MODAL_RENDERERS.confirmReset = ()=>`<div class="modal-overlay"><div class="modal-card">
+    <div class="modal-title">איפוס כללי?</div>
+    <div class="modal-sub">כל ה-XP, הרמות, הרצף וההתקדמות היומית יאופסו. הדמויות ולוח הזמנים יישארו.</div>
+    <button class="modal-btn danger" data-action="doReset">כן, אפס</button>
+    <button class="modal-btn secondary" data-action="closeModal">ביטול</button>
+  </div></div>`;
+  render();
+}
+
+function doReset(){
+  Object.keys(CHILDREN_CONFIG).forEach(id=>{
+    const avatar = STATE.children[id].avatar;
+    STATE.children[id] = freshChildState(id);
+    STATE.children[id].avatar = avatar;
+  });
+  persist();
+  VIEW.modal=null; VIEW.modalData=null;
+  setScreen('admin');
+}
+
+/* ===================== EVENT DELEGATION ===================== */
+
+document.addEventListener('click', function(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  const child = el.dataset.child;
+  switch(action){
+    case 'openChild': openChild(child); break;
+    case 'openAdmin': setScreen('admin'); break;
+    case 'backToProfiles': backToProfiles(); break;
+    case 'pickAvatar': pickAvatar(child, el.dataset.avatar); break;
+    case 'confirmAvatar': setScreen('home', child); break;
+    case 'changeAvatar': changeAvatar(child); break;
+    case 'toggleBonus': toggleBonus(child, el.dataset.bonus, parseInt(el.dataset.xp,10)); break;
+    case 'openTask': openTask(child, el.dataset.task); break;
+    case 'closeModal': closeModal(); break;
+    case 'cancelTimer': cancelTimer(child, el.dataset.task); break;
+    case 'triviaAnswer': triviaAnswer(parseInt(el.dataset.idx,10)); break;
+    case 'toggleDinnerStep': toggleDinnerStep(parseInt(el.dataset.idx,10)); break;
+    case 'finishDinnerSteps': finishDinnerSteps(); break;
+    case 'requestReset': requestReset(); break;
+    case 'doReset': doReset(); break;
+    case 'setLessonDay': setLessonDay(child, el.value); break;
+    case 'setLessonTime': setLessonTime(child, el.value); break;
+    case 'setSportTime': setSportTime(child, el.value); break;
+    case 'toggleSportDay': toggleSportDay(child, el.dataset.day); break;
+    case 'setDinnerDay': setDinnerDay(child, el.value); break;
+    case 'tryUnlock': tryUnlock(); break;
+  }
+});
+document.addEventListener('change', function(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  const child = el.dataset.child;
+  if(action==='setLessonDay') setLessonDay(child, el.value);
+  if(action==='setLessonTime') setLessonTime(child, el.value);
+  if(action==='setSportTime') setSportTime(child, el.value);
+  if(action==='setDinnerDay') setDinnerDay(child, el.value);
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && e.target && e.target.id==='lockInput') tryUnlock();
+});
+
+/* ===================== LOCK SCREEN + BOOT ===================== */
+
+const LOCK_KEY = 'sqUnlocked_v1';
+
+function isUnlocked(){
+  try{ return localStorage.getItem(LOCK_KEY) === '1'; }catch(e){ return false; }
+}
+
+function renderLockScreen(errorMsg){
+  document.getElementById('app').innerHTML = `<div class="lock-wrap screen">
+    <div class="lock-card">
+      <div class="app-title">🌞 מסע הקיץ</div>
+      <div class="app-subtitle">הזינו את הקוד המשפחתי כדי להיכנס</div>
+      <input id="lockInput" class="lock-input" type="text" inputmode="numeric" maxlength="12" placeholder="קוד סודי" autocomplete="off">
+      <div class="lock-error">${errorMsg||''}</div>
+      <button class="modal-btn" data-action="tryUnlock">כניסה</button>
+    </div>
+  </div>`;
+  const input = document.getElementById('lockInput');
+  if(input) input.focus();
+}
+
+function tryUnlock(){
+  const input = document.getElementById('lockInput');
+  const val = input ? input.value.trim() : '';
+  if(val && val===APP_PASSCODE){
+    try{ localStorage.setItem(LOCK_KEY, '1'); }catch(e){}
+    boot();
+  }else{
+    renderLockScreen('קוד שגוי, נסו שוב');
+  }
+}
+
+function renderLoadError(err){
+  document.getElementById('app').innerHTML = `<div class="load-error-wrap screen">
+    <div class="lock-card">
+      <div class="app-title">⚠️ שגיאת חיבור</div>
+      <div class="modal-sub">לא הצלחנו להתחבר לבסיס הנתונים. ודאו ש-SUPABASE_URL ו-SUPABASE_ANON_KEY בראש הקובץ מוגדרים נכון, ושהרצתם את קובץ supabase-schema.sql בפרויקט שלכם.</div>
+      <div class="modal-sub" style="opacity:.6; font-size:11px;">${(err&&err.message)||err||''}</div>
+    </div>
+  </div>`;
+}
+
+async function boot(){
+  if(!supabase){
+    renderLoadError('חסרים פרטי חיבור ל-Supabase (SUPABASE_URL / SUPABASE_ANON_KEY) בראש הקובץ.');
+    return;
+  }
+  try{
+    await initState();
+    render();
+  }catch(e){
+    console.error(e);
+    renderLoadError(e);
+  }
+}
+
+if(isUnlocked()) boot(); else renderLockScreen();
+
+})();
+</script>
+</body>
+</html>
