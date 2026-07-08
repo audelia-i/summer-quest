@@ -65,18 +65,18 @@
   @keyframes popIn{0%{opacity:0; transform:scale(.6) translateY(10px)} 70%{opacity:1; transform:scale(1.06) translateY(0)} 100%{transform:scale(1)}}
 
   /* ---------- avatar identity colors ---------- */
-  .avatar-ninja{--ac:oklch(52% 0.03 280 / .55); --ac2:oklch(30% 0.02 280 / .5);}
-  .avatar-hero{--ac:oklch(60% 0.20 260 / .55); --ac2:oklch(38% 0.15 260 / .5);}
-  .avatar-robot{--ac:oklch(75% 0.05 210 / .55); --ac2:oklch(50% 0.04 210 / .5);}
-  .avatar-dragon{--ac:oklch(62% 0.17 145 / .55); --ac2:oklch(38% 0.13 145 / .5);}
-  .avatar-astro{--ac:oklch(48% 0.16 262 / .55); --ac2:oklch(28% 0.12 262 / .5);}
-  .avatar-wizard{--ac:oklch(58% 0.20 300 / .55); --ac2:oklch(36% 0.16 300 / .5);}
-  .avatar-fox{--ac:oklch(68% 0.18 55 / .55); --ac2:oklch(46% 0.15 45 / .5);}
-  .avatar-bear{--ac:oklch(52% 0.09 55 / .55); --ac2:oklch(32% 0.06 50 / .5);}
-  .avatar-bunny{--ac:oklch(78% 0.12 340 / .55); --ac2:oklch(54% 0.14 340 / .5);}
-  .avatar-turtle{--ac:oklch(62% 0.13 155 / .55); --ac2:oklch(40% 0.11 155 / .5);}
-  .avatar-dolphin{--ac:oklch(68% 0.13 220 / .55); --ac2:oklch(44% 0.12 220 / .5);}
-  .avatar-lion{--ac:oklch(72% 0.15 75 / .55); --ac2:oklch(48% 0.14 65 / .5);}
+  .avatar-ninja{--ac:oklch(52% 0.03 280 / .55); --ac2:oklch(30% 0.02 280 / .5); --bc:oklch(52% 0.03 280); --bc2:oklch(30% 0.02 280);}
+  .avatar-hero{--ac:oklch(60% 0.20 260 / .55); --ac2:oklch(38% 0.15 260 / .5); --bc:oklch(60% 0.20 260); --bc2:oklch(38% 0.15 260);}
+  .avatar-robot{--ac:oklch(75% 0.05 210 / .55); --ac2:oklch(50% 0.04 210 / .5); --bc:oklch(75% 0.05 210); --bc2:oklch(50% 0.04 210);}
+  .avatar-dragon{--ac:oklch(62% 0.17 145 / .55); --ac2:oklch(38% 0.13 145 / .5); --bc:oklch(62% 0.17 145); --bc2:oklch(38% 0.13 145);}
+  .avatar-astro{--ac:oklch(48% 0.16 262 / .55); --ac2:oklch(28% 0.12 262 / .5); --bc:oklch(48% 0.16 262); --bc2:oklch(28% 0.12 262);}
+  .avatar-wizard{--ac:oklch(58% 0.20 300 / .55); --ac2:oklch(36% 0.16 300 / .5); --bc:oklch(58% 0.20 300); --bc2:oklch(36% 0.16 300);}
+  .avatar-fox{--ac:oklch(68% 0.18 55 / .55); --ac2:oklch(46% 0.15 45 / .5); --bc:oklch(68% 0.18 55); --bc2:oklch(46% 0.15 45);}
+  .avatar-bear{--ac:oklch(52% 0.09 55 / .55); --ac2:oklch(32% 0.06 50 / .5); --bc:oklch(52% 0.09 55); --bc2:oklch(32% 0.06 50);}
+  .avatar-bunny{--ac:oklch(78% 0.12 340 / .55); --ac2:oklch(54% 0.14 340 / .5); --bc:oklch(78% 0.12 340); --bc2:oklch(54% 0.14 340);}
+  .avatar-turtle{--ac:oklch(62% 0.13 155 / .55); --ac2:oklch(40% 0.11 155 / .5); --bc:oklch(62% 0.13 155); --bc2:oklch(40% 0.11 155);}
+  .avatar-dolphin{--ac:oklch(68% 0.13 220 / .55); --ac2:oklch(44% 0.12 220 / .5); --bc:oklch(68% 0.13 220); --bc2:oklch(44% 0.12 220);}
+  .avatar-lion{--ac:oklch(72% 0.15 75 / .55); --ac2:oklch(48% 0.14 65 / .5); --bc:oklch(72% 0.15 75); --bc2:oklch(48% 0.14 65);}
 
   /* ---------- profile select ---------- */
   .profiles-wrap{
@@ -151,9 +151,9 @@
   .message-date{font-size:11px; opacity:.6; margin-top:6px; font-weight:500;}
   .msg-textarea{width:100%; min-height:70px; letter-spacing:normal; font-size:14px; text-align:right; resize:vertical; margin:10px 0;}
 
-  .xp-bar-wrap{background:rgba(0,0,0,.3); border-radius:99px; height:16px; overflow:hidden; margin:6px auto 3px; box-shadow:inset 0 2px 4px rgba(0,0,0,.4); max-width:480px;}
+  .xp-bar-wrap{background:rgba(0,0,0,.3); border-radius:99px; height:26px; overflow:hidden; margin:10px auto 5px; box-shadow:inset 0 2px 4px rgba(0,0,0,.4); max-width:480px;}
   .xp-bar-fill{height:100%; background:linear-gradient(90deg,var(--gold-2),var(--gold)); transition:width .6s cubic-bezier(.22,1,.36,1); box-shadow:0 0 12px var(--gold);}
-  .xp-label{font-size:11.5px; opacity:.85; display:flex; justify-content:space-between; font-weight:600; max-width:480px; margin-left:auto; margin-right:auto;}
+  .xp-label{font-size:16px; opacity:.9; display:flex; justify-content:space-between; font-weight:700; max-width:480px; margin-left:auto; margin-right:auto;}
   .streak-chip{display:flex; width:fit-content; align-items:center; gap:5px; background:rgba(255,255,255,.12); border-radius:99px; padding:5px 12px; font-size:12px; margin:8px auto 0; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,.2);}
 
   .stars-summary{
@@ -331,12 +331,15 @@
   .trivia-progress{font-size:12px; opacity:.7; margin-bottom:12px; font-weight:600; letter-spacing:.3px;}
   .trivia-prompt{font-size:68px; font-weight:800; margin:10px 0 22px;}
   .trivia-prompt-nums{font-size:32px; font-weight:800; margin:10px 0 22px; direction:ltr;}
-  .trivia-choices{display:grid; grid-template-columns:1fr 1fr 1fr; gap:11px;}
-  .trivia-choice{background:rgba(255,255,255,.09); border:2px solid rgba(255,255,255,.18); border-radius:var(--r-md); padding:16px 4px; font-size:34px; color:#fff;
+  .trivia-choices{display:grid; grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:18px; justify-content:center;}
+  .trivia-choice{background:rgba(255,255,255,.09); border:2px solid rgba(255,255,255,.18); border-radius:var(--r-md); padding:20px 6px; font-size:34px; color:#fff;
     box-shadow:0 3px 0 rgba(0,0,0,.22), 0 5px 10px rgba(0,0,0,.25); transition:transform .12s;}
   .trivia-choice:active{transform:translateY(2px) scale(.96);}
   .trivia-choice.wrong-flash{background:oklch(52% 0.18 25 / .55); border-color:var(--danger); animation:shake .4s;}
   .trivia-choice.right-flash{background:oklch(56% 0.15 150 / .55); border-color:var(--good); transform:scale(1.06);}
+  .trivia-choice[disabled]{opacity:.55;}
+  .trivia-choice[disabled]:active{transform:none;}
+  .trivia-reveal{margin-top:14px; font-size:14px; font-weight:800; color:oklch(80% 0.16 150); animation:popIn .4s cubic-bezier(.22,1,.36,1);}
   @keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}}
 
   /* ---------- dinner steps ---------- */
@@ -397,6 +400,21 @@
   .path-avatar-token .av-art{width:48px; height:48px;}
   .timer-avatar-grey .av-art, .timer-avatar-color .av-art{width:152px; height:152px;}
   .snapshot-avatar .av-art{width:36px; height:36px;}
+
+  /* ---------- persistent side character dock ---------- */
+  .char-dock{
+    position:fixed; top:50%; inset-inline-end:6px; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    z-index:4; width:72px; pointer-events:none;
+  }
+  .char-dock-figure{position:relative; width:66px; height:118px;}
+  .char-dock-figure svg{width:100%; height:100%; display:block; filter:drop-shadow(0 5px 8px rgba(0,0,0,.45)); transition:filter .4s ease;}
+  .char-dock-name{font-size:11px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.85); text-align:center; margin-top:2px;}
+  .char-dock-level{font-size:9.5px; font-weight:600; opacity:.9; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.8); text-align:center; line-height:1.3; max-width:82px;}
+  .char-decor{position:absolute; font-size:15px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)); animation:decorFloat 3s ease-in-out infinite;}
+  .char-decor-0{top:-2%; inset-inline-start:-10%;}
+  .char-decor-1{top:30%; inset-inline-end:-14%; animation-delay:.7s;}
+  @keyframes decorFloat{0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-5px) rotate(8deg)}}
 
   /* ---------- 3D adventure map ---------- */
   .path-section{perspective:850px;}
@@ -675,6 +693,66 @@ function avatarFace(av, fallback){
   if(av && AVATAR_ART[av.id]) return `<span class="av-art">${AVATAR_ART[av.id]}</span>`;
   if(av) return av.emoji;
   return fallback || '🙂';
+}
+
+/* ---- full-body character (head art + generic body silhouette) ---- */
+function stripSvgTag(svgStr){
+  return svgStr.replace(/<svg[^>]*>/,'').replace(/<\/svg>\s*$/,'');
+}
+function fullBodyArt(avatarId){
+  const head = AVATAR_ART[avatarId];
+  if(!head) return '';
+  const inner = stripSvgTag(head);
+  return `<svg viewBox="0 0 100 175" xmlns="http://www.w3.org/2000/svg">
+    <g>
+      <rect x="34" y="140" width="13" height="32" rx="6" fill="var(--bc2)"/>
+      <rect x="53" y="140" width="13" height="32" rx="6" fill="var(--bc2)"/>
+      <ellipse cx="40.5" cy="173" rx="9" ry="5" fill="var(--bc2)"/>
+      <ellipse cx="59.5" cy="173" rx="9" ry="5" fill="var(--bc2)"/>
+      <rect x="24" y="95" width="52" height="52" rx="20" fill="var(--bc)"/>
+      <rect x="7" y="99" width="16" height="42" rx="8" fill="var(--bc)" transform="rotate(10 15 99)"/>
+      <rect x="77" y="99" width="16" height="42" rx="8" fill="var(--bc)" transform="rotate(-10 85 99)"/>
+      <ellipse cx="14" cy="141" rx="8" ry="7" fill="var(--bc2)"/>
+      <ellipse cx="86" cy="141" rx="8" ry="7" fill="var(--bc2)"/>
+    </g>
+    <g>${inner}</g>
+  </svg>`;
+}
+
+/* ---- level skins: a new look every level, cycling through a set of themes ---- */
+const CHAR_SKINS = [
+  {name:'רגיל',       filter:'none',                                        decor:[]},
+  {name:'פרחים',      filter:'saturate(1.2) hue-rotate(-6deg)',              decor:['🌸','🌼']},
+  {name:'סוכריות',    filter:'saturate(1.35) brightness(1.05)',              decor:['🍬','🍭']},
+  {name:'כוכבים',     filter:'brightness(1.12) contrast(1.05)',              decor:['⭐','✨']},
+  {name:'קשת בענן',   filter:'saturate(1.45) hue-rotate(18deg)',             decor:['🌈','✨']},
+  {name:'אש',         filter:'saturate(1.3) hue-rotate(-18deg) brightness(1.05)', decor:['🔥','🔥']},
+  {name:'קרח',        filter:'hue-rotate(150deg) saturate(1.15) brightness(1.1)', decor:['❄️','❄️']},
+  {name:'כסף',        filter:'grayscale(.7) brightness(1.3) contrast(1.1)',  decor:['🥈','✨']},
+  {name:'זהב',        filter:'sepia(.5) saturate(2.1) brightness(1.12)',     decor:['🥇','✨']},
+  {name:'יהלום',      filter:'brightness(1.22) contrast(1.15) saturate(1.15)', decor:['💎','✨']},
+];
+function getCharSkin(level){
+  if(level<=1) return CHAR_SKINS[0];
+  const idx = 1 + ((level-2) % (CHAR_SKINS.length-1));
+  return CHAR_SKINS[idx];
+}
+
+function renderCharDock(childId){
+  const cfg = CHILDREN_CONFIG[childId];
+  const c = STATE.children[childId];
+  const av = findAvatar(cfg.track, c.avatar);
+  if(!av) return '';
+  const skin = getCharSkin(c.level);
+  const decor = skin.decor.map((e,i)=>`<span class="char-decor char-decor-${i}">${e}</span>`).join('');
+  return `<div class="char-dock avatar-${av.id}">
+    <div class="char-dock-figure" style="filter:${skin.filter}">
+      ${fullBodyArt(av.id)}
+      ${decor}
+    </div>
+    <div class="char-dock-name">${cfg.name}</div>
+    <div class="char-dock-level">רמה ${c.level}${skin.name!=='רגיל' ? ' · '+skin.name : ''}</div>
+  </div>`;
 }
 
 const SURPRISES = ['מנה מיוחדת בארוחה 🍕','משחק משפחתי מיוחד הערב 🎲','קינוח מפתיע 🍨','סרט משפחתי הערב 🍿'];
@@ -1264,6 +1342,7 @@ function renderQuestHome(childId){
   }).join('');
 
   return `<div class="quest-theme home-wrap screen">
+    ${renderCharDock(childId)}
     <div class="home-header">
       <button class="back-btn" data-action="backToProfiles">→</button>
       <div class="header-avatar ${av?'avatar-'+av.id:''}">${avatarFace(av)}</div>
@@ -1292,6 +1371,7 @@ function renderIslandHome(childId){
   const tasks = getIslandTasks(childId, dateStr);
   const daily = ensureDaily(childId, dateStr);
   const playedCount = daily.bonusGamesPlayed||0;
+  const xpIntoLevel = c.xp % XP_PER_LEVEL;
   const bonusChips = ISLAND_BONUSES.map(b=>{
     const done = !!daily.done[b.id];
     return `<button class="bonus-chip bonus-${b.id} ${done?'done':''}" data-action="toggleBonus" data-child="${childId}" data-bonus="${b.id}" data-xp="${b.xp}" ${done?'disabled':''}>
@@ -1301,6 +1381,7 @@ function renderIslandHome(childId){
     </button>`;
   }).join('');
   return `<div class="island-theme home-wrap screen">
+    ${renderCharDock(childId)}
     <div class="home-header">
       <button class="back-btn" data-action="backToProfiles">→</button>
       <div class="header-avatar ${av?'avatar-'+av.id:''}">${avatarFace(av)}</div>
@@ -1311,6 +1392,8 @@ function renderIslandHome(childId){
       ${renderMailboxBtn(childId)}
       <button class="change-avatar-btn" data-action="changeAvatar" data-child="${childId}">החלף דמות</button>
     </div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${xpIntoLevel}%"></div></div>
+    <div class="xp-label"><span>${xpIntoLevel} / ${XP_PER_LEVEL} 🪙 עד ליהלום הבא</span><span>סה"כ ${c.xp} 🪙</span></div>
     <div class="bonus-row">
       ${bonusChips}
       <button class="bonus-chip bonus-game" data-action="openBonusGame" data-child="${childId}">
@@ -1514,77 +1597,124 @@ function cancelTimer(childId, taskId){
 }
 
 /* ---- Trivia modal (island) ---- */
-function makeLetterRound(){
-  const idx = Math.floor(Math.random()*LETTERS.length);
-  const target = LETTERS[idx];
-  const others = shuffle(LETTERS.filter((_,i)=>i!==idx)).slice(0,2);
+function nextLetterTarget(data){
+  if(!data.letterPool || data.letterPool.length===0){
+    data.letterPool = shuffle(LETTERS);
+  }
+  return data.letterPool.pop();
+}
+function makeLetterRound(data){
+  const target = nextLetterTarget(data);
+  const others = shuffle(LETTERS.filter(l=>l.letter!==target.letter)).slice(0,4);
   const choices = shuffle([target, ...others]).map(c=>({display:c.emoji, correct:c.letter===target.letter}));
   return { kind:'letter', prompt:target.letter, choices };
 }
 function makeNumberRound(){
-  const a = 1+Math.floor(Math.random()*8);
-  const b = 1+Math.floor(Math.random()*Math.max(1,(10-a)));
-  const sum = a+b;
-  const set = new Set([sum]);
-  let guard=0;
-  while(set.size<3 && guard<30){
-    guard++;
-    const cand = sum + (Math.floor(Math.random()*5)-2);
-    if(cand>=2 && cand<=10) set.add(cand);
+  const op = Math.random()<0.5 ? '+' : '-';
+  const visual = Math.random()<0.5;
+  let a,b,answer;
+  if(op==='+'){
+    a = 1+Math.floor(Math.random()*8);
+    b = 1+Math.floor(Math.random()*Math.max(1,(10-a)));
+    answer = a+b;
+  }else{
+    a = 2+Math.floor(Math.random()*9);
+    b = 1+Math.floor(Math.random()*(a-1));
+    answer = a-b;
   }
-  const choices = shuffle([...set]).map(n=>({display:String(n), correct:n===sum}));
-  return { kind:'number', prompt:{a,b}, choices };
+  const set = new Set([answer]);
+  for(const d of shuffle([-3,-2,-1,1,2,3])){
+    if(set.size>=4) break;
+    const cand = answer + d;
+    if(cand>=0 && cand<=10) set.add(cand);
+  }
+  const choices = shuffle([...set]).map(n=>({display:String(n), correct:n===answer}));
+  return { kind:'number', prompt:{a,b,op}, visual, choices };
 }
-function makeRound(){ return Math.random()<0.5 ? makeLetterRound() : makeNumberRound(); }
+function makeRound(data){ return Math.random()<0.5 ? makeLetterRound(data) : makeNumberRound(); }
 
 function openTriviaModal(childId, task){
+  const data = { childId, task, correctCount:0, total:10, attempts:0, reveal:false, round:null, flashIdx:null, flashType:null, letterPool:shuffle(LETTERS) };
+  data.round = makeRound(data);
   VIEW.modal='trivia';
-  VIEW.modalData={ childId, task, roundIndex:0, total:5, round:makeRound(), flashIdx:null, flashType:null };
+  VIEW.modalData=data;
   render();
 }
 
+function renderNumberPrompt(round){
+  const {a,b,op} = round.prompt;
+  if(round.visual){
+    return `<div class="trivia-prompt-nums">${'🔵'.repeat(a)} ${op} ${'🔵'.repeat(b)} = ?</div>`;
+  }
+  return `<div class="trivia-prompt-nums">${a} ${op} ${b} = ?</div>`;
+}
+
 function renderTriviaModal(data){
-  const {roundIndex, total, round} = data;
+  const {correctCount, total, round, reveal} = data;
   const promptHtml = round.kind==='letter'
     ? `<div class="trivia-prompt">${round.prompt}</div>`
-    : `<div class="trivia-prompt-nums">${'🔵'.repeat(data.round.prompt.a)} + ${'🔵'.repeat(data.round.prompt.b)} = ?</div>`;
+    : renderNumberPrompt(round);
   const choices = round.choices.map((ch,i)=>{
     let cls='trivia-choice';
-    if(data.flashIdx===i) cls += data.flashType==='right' ? ' right-flash' : ' wrong-flash';
-    return `<button class="${cls}" data-action="triviaAnswer" data-idx="${i}">${ch.display}</button>`;
+    if(reveal){
+      if(ch.correct) cls += ' right-flash';
+    }else if(data.flashIdx===i){
+      cls += data.flashType==='right' ? ' right-flash' : ' wrong-flash';
+    }
+    return `<button class="${cls}" data-action="triviaAnswer" data-idx="${i}" ${reveal?'disabled':''}>${ch.display}</button>`;
   }).join('');
+  const revealHtml = reveal ? `<div class="trivia-reveal">זו התשובה הנכונה!</div>` : '';
   return `<div class="modal-overlay"><div class="modal-card">
-    <div class="trivia-progress">סבב ${roundIndex+1} מתוך ${total}</div>
+    <div class="trivia-progress">תשובות נכונות: ${correctCount} מתוך ${total}</div>
     ${promptHtml}
     <div class="trivia-choices">${choices}</div>
+    ${revealHtml}
   </div></div>`;
+}
+
+function advanceTriviaRound(data){
+  if(!VIEW.modalData || VIEW.modal!=='trivia') return;
+  if(data.correctCount >= data.total){
+    finishTrivia(data.childId, data.task);
+  }else{
+    data.attempts = 0;
+    data.reveal = false;
+    data.round = makeRound(data);
+    data.flashIdx = null; data.flashType=null;
+    render();
+  }
 }
 
 function triviaAnswer(idx){
   const data = VIEW.modalData;
+  if(data.reveal) return;
   const choice = data.round.choices[idx];
   if(choice.correct){
     data.flashIdx = idx; data.flashType='right';
     render();
     setTimeout(()=>{
       if(!VIEW.modalData || VIEW.modal!=='trivia') return;
-      data.roundIndex += 1;
-      if(data.roundIndex >= data.total){
-        finishTrivia(data.childId, data.task);
-      }else{
-        data.round = makeRound();
-        data.flashIdx = null; data.flashType=null;
-        render();
-      }
+      data.correctCount += 1;
+      advanceTriviaRound(data);
     }, 550);
   }else{
+    data.attempts += 1;
     data.flashIdx = idx; data.flashType='wrong';
     render();
-    setTimeout(()=>{
-      if(!VIEW.modalData || VIEW.modal!=='trivia') return;
-      data.flashIdx = null; data.flashType=null;
-      render();
-    }, 550);
+    if(data.attempts >= 2){
+      setTimeout(()=>{
+        if(!VIEW.modalData || VIEW.modal!=='trivia') return;
+        data.reveal = true; data.flashIdx = null; data.flashType = null;
+        render();
+        setTimeout(()=>advanceTriviaRound(data), 1600);
+      }, 550);
+    }else{
+      setTimeout(()=>{
+        if(!VIEW.modalData || VIEW.modal!=='trivia') return;
+        data.flashIdx = null; data.flashType=null;
+        render();
+      }, 550);
+    }
   }
 }
 
